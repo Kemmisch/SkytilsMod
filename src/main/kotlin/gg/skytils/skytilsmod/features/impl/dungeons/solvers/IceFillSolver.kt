@@ -197,8 +197,8 @@ object IceFillSolver {
 
         private fun getPossibleMoves(pos: BlockPos): List<BlockPos> {
             return EnumFacing.HORIZONTALS.map { pos.offset(it) }.filter { spot ->
-                val down = world.getBlockState(spot.down()).block
-                (down == Blocks.ice || down == Blocks.packed_ice) && world.getBlockState(spot).block != Blocks.stone
+                Utils.equalsOneOf(world.getBlockState(spot.down()).block, Blocks.ice, Blocks.packed_ice) &&
+                        world.getBlockState(spot).block != Blocks.stone
             }
         }
     }
