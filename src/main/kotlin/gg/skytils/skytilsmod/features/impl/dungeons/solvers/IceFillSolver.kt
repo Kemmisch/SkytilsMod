@@ -18,12 +18,12 @@
 package gg.skytils.skytilsmod.features.impl.dungeons.solvers
 
 import gg.essential.universal.UChat
+import gg.essential.universal.UKeyboard
 import gg.essential.universal.UMatrixStack
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.features.impl.misc.Funny
-import gg.skytils.skytilsmod.listeners.DungeonListener
 import gg.skytils.skytilsmod.utils.RenderUtil
 import gg.skytils.skytilsmod.utils.SuperSecretSettings
 import gg.skytils.skytilsmod.utils.Utils
@@ -47,9 +47,16 @@ object IceFillSolver {
     private var job: Job? = null
 
     init {
+        //TODO: DEBUG
+        tickTimer(4, repeats = true) {
+            if (UKeyboard.isAltKeyDown()) {
+                job = null
+                puzzles = null
+            }
+        }
         tickTimer(20, repeats = true) {
-            if (!Utils.inDungeons || !Skytils.config.iceFillSolver || "Ice Fill" !in DungeonListener.missingPuzzles ||
-                puzzles != null || job?.isActive == true) return@tickTimer
+            //TODO: DEBUG
+            if (/*!Utils.inDungeons || !Skytils.config.iceFillSolver || "Ice Fill" !in DungeonListener.missingPuzzles ||*/ puzzles != null || job?.isActive == true) return@tickTimer
             val player = mc.thePlayer ?: return@tickTimer
             val world = mc.theWorld ?: return@tickTimer
 
@@ -58,7 +65,7 @@ object IceFillSolver {
                     it.numPlayersUsing == 0 && it.pos.y == 75 && it.getDistanceSq(
                         player.posX, player.posY, player.posZ
                     ) < 750
-                }.map { chest ->
+                }.firstNotNullOfOrNull { chest ->
                     val pos = chest.pos
 
                     EnumFacing.HORIZONTALS.firstOrNull {
@@ -76,35 +83,31 @@ object IceFillSolver {
                             pos.offset(it.opposite).down(2)
                         ).block == Blocks.stone_brick_stairs
                     }?.let {
-                        Pair(chest, it)
+                        //chest: -11 75 -89; direction: east
+
+                        val starts = Triple(
+                            //three: -33 70 -89
+                            pos.down(5).offset(it.opposite, 22),
+                            //five: -28 71 -89
+                            pos.down(4).offset(it.opposite, 17),
+                            //seven: -21 72 -89
+                            pos.down(3).offset(it.opposite, 10),
+                        )
+                        val ends = Triple(
+                            //three: -29 70 -89
+                            starts.first.offset(it, 3),
+                            //five: -23 71 -89
+                            starts.second.offset(it, 5),
+                            //seven: -14 72 -89
+                            starts.third.offset(it, 7),
+                        )
+
+                        puzzles = Triple(
+                            IceFillPuzzle(pos, world, starts.first, ends.first, it),
+                            IceFillPuzzle(pos, world, starts.second, ends.second, it),
+                            IceFillPuzzle(pos, world, starts.third, ends.third, it)
+                        )
                     }
-                }.firstOrNull()?.let {
-                    //chest: -11 75 -89; direction: east
-                    val (chest, direction) = it
-                    val pos = chest.pos
-
-                    val starts = Triple(
-                        //three: -33 70 -89
-                        pos.down(5).offset(direction.opposite, 22),
-                        //five: -28 71 -89
-                        pos.down(4).offset(direction.opposite, 17),
-                        //seven: -21 72 -89
-                        pos.down(3).offset(direction.opposite, 10),
-                    )
-                    val ends = Triple(
-                        //three: -29 70 -89
-                        starts.first.offset(direction, 3),
-                        //five: -23 71 -89
-                        starts.second.offset(direction, 5),
-                        //seven: -14 72 -89
-                        starts.third.offset(direction, 7),
-                    )
-
-                    puzzles = Triple(
-                        IceFillPuzzle(chest.pos, world, starts.first, ends.first, direction),
-                        IceFillPuzzle(chest.pos, world, starts.second, ends.second, direction),
-                        IceFillPuzzle(chest.pos, world, starts.third, ends.third, direction)
-                    )
                 }
             }
         }
@@ -112,7 +115,8 @@ object IceFillSolver {
 
     @SubscribeEvent
     fun onWorldRender(event: RenderWorldLastEvent) {
-        if (!Utils.inDungeons || !Skytils.config.iceFillSolver || "Ice Fill" !in DungeonListener.missingPuzzles) return
+        //TODO: DEBUG
+        //if (!Utils.inDungeons || !Skytils.config.iceFillSolver || "Ice Fill" !in DungeonListener.missingPuzzles) return
         val (three, five, seven) = puzzles ?: return
         val matrixStack = UMatrixStack.Compat.get()
         three.draw(matrixStack, event.partialTicks)
@@ -127,14 +131,10 @@ object IceFillSolver {
     }
 
     private class IceFillPuzzle(
-        val chest: BlockPos,
-        val world: World,
-        val start: BlockPos,
-        val end: BlockPos,
-        val facing: EnumFacing
+        val chest: BlockPos, val world: World, val start: BlockPos, val end: BlockPos, val facing: EnumFacing
     ) {
         private val optimal = SuperSecretSettings.azooPuzzoo
-        private var path: List<BlockPos>? = null
+        private var path: List<Vec3>? = null
 
         init {
             Skytils.launch {
@@ -145,44 +145,33 @@ object IceFillSolver {
             }
         }
 
-        private fun findPath(): List<BlockPos>? {
+        private fun findPath(): List<Vec3>? {
             val spaces = getSpaces()
 
-            //TODO: Make this not cancer
-            val moves = spaces.associateWith {
-                EnumFacing.HORIZONTALS
-                    .associateBy { direction -> it.offset(direction) }
+            val moves = spaces.associate {
+                val neighbors = EnumFacing.HORIZONTALS.associateBy { direction -> it.offset(direction) }
                     .filterKeys { spot -> spot in spaces }
-                    .map { (spot, direction) -> Pair(spaces.indexOf(spot), direction) }
-            }.mapKeys { (pos, _) -> spaces.indexOf(pos) }
+                    .mapKeys { (pos, _) -> spaces.indexOf(pos) }
+                Pair(spaces.indexOf(it), neighbors)
+            }
 
-            val visited = BooleanArray(spaces.size).also { it[spaces.indexOf(start)] = true }
-            val n = spaces.size
             val startIndex = spaces.indexOf(start)
+            val n = spaces.size
+            val visited = BooleanArray(n).also { it[startIndex] = true }
+            val startPath = IntArray(n) { -1 }.also { it[0] = startIndex }
 
             if (optimal) {
                 return getOptimalPath(
-                    //TODO: Technically not possible to have a null value here, but I don't wanna use !!
-                    Array(spaces.size) { moves[it] ?: emptyList() },
-                    n,
-                    startIndex,
-                    visited.clone(),
-                    mutableListOf(startIndex),
-                    1,
-                    facing
-                )?.first?.map { spaces.elementAt(it) }
+                    //TODO: I hate !!
+                    Array(n) { moves[it]!! }, n, startIndex, visited, startPath, 1, facing, 0, Int.MAX_VALUE
+                )?.first?.map { Vec3(spaces.elementAt(it)).addVector(0.5, 0.01, 0.5) }
             } else {
-                val fixed = moves.mapValues { (_, y) -> y.map { it.first } }
+                val fixed = moves.mapValues { (_, y) -> y.map { it.key } }
 
                 return getFirstPath(
-                    //TODO: Technically not possible to have a null value here, but I don't wanna use !!
-                    Array(spaces.size) { fixed[it] ?: emptyList() },
-                    n,
-                    startIndex,
-                    visited.clone(),
-                    mutableListOf(startIndex),
-                    1
-                )?.map { spaces.elementAt(it) }
+                    //TODO: I hate !!
+                    Array(n) { fixed[it]!! }, n, startIndex, visited, startPath, 1
+                )?.map { Vec3(spaces.elementAt(it)).addVector(0.5, 0.01, 0.5) }
             }
         }
 
@@ -190,17 +179,8 @@ object IceFillSolver {
             GlStateManager.pushMatrix()
             GlStateManager.disableCull()
 
-            //TODO: Probably just have path be a list of Vec3s
             path?.zipWithNext { first, second ->
-                RenderUtil.draw3DLine(
-                    Vec3(first).addVector(0.5, 0.01, 0.5),
-                    Vec3(second).addVector(0.5, 0.01, 0.5),
-                    5,
-                    Color.MAGENTA,
-                    partialTicks,
-                    matrixStack,
-                    Funny.alphaMult
-                )
+                RenderUtil.draw3DLine(first, second, 5, Color.MAGENTA, partialTicks, matrixStack, Funny.alphaMult)
             }
 
             GlStateManager.popMatrix()
@@ -211,7 +191,7 @@ object IceFillSolver {
             n: Int,
             visiting: Int,
             visited: BooleanArray,
-            path: MutableList<Int>,
+            path: IntArray,
             depth: Int,
         ): List<Int>? {
             if (depth == n) {
@@ -223,14 +203,12 @@ object IceFillSolver {
             for (index in move) {
                 if (!visited[index]) {
                     visited[index] = true
-                    path.add(index)
+                    path[depth] = index
 
-                    if (getFirstPath(moves, n, index, visited, path, depth + 1) != null) {
-                        return path.toList()
-                    }
+                    val foundPath = getFirstPath(moves, n, index, visited, path, depth + 1)
+                    if (foundPath != null) return foundPath
 
                     visited[index] = false
-                    path.removeLast()
                 }
             }
 
@@ -239,55 +217,50 @@ object IceFillSolver {
 
         //TODO: Maybe make it only return the path and not the corners
         private fun getOptimalPath(
-            moves: Array<List<Pair<Int, EnumFacing>>>,
+            moves: Array<Map<Int, EnumFacing>>,
             n: Int,
             visiting: Int,
             visited: BooleanArray,
-            path: MutableList<Int>,
+            path: IntArray,
             depth: Int,
             lastDirection: EnumFacing,
-            corners: Int = 0,
-            knownLeastCorners: Int = Int.MAX_VALUE
+            corners: Int,
+            knownLeastCorners: Int
         ): Pair<List<Int>, Int>? {
             if (depth == n) {
                 return Pair(path.toList(), corners)
             }
 
-            val move = moves[visiting]
 
-            var newPath: List<Int>? = null
+            var bestPath: List<Int>? = null
             var leastCorners = knownLeastCorners
 
             if (leastCorners > corners) {
+                val move = moves[visiting]
+
                 for ((index, direction) in move) {
-                    if (!visited[index]) {
+                    if (!visited[index]) { //TODO: Last slow part, the rest of performance is just recursion issues?
                         visited[index] = true
-                        path.add(index) //TODO: SLOW
+                        path[depth] = index
 
                         val newCorners = if (lastDirection != direction) corners + 1 else corners
+                        //TODO: Depth check and corner check should be inside here to remove the amount of function calls
 
-                        getOptimalPath(
-                            moves,
-                            n,
-                            index,
-                            visited,
-                            path,
-                            depth + 1,
-                            direction,
-                            newCorners,
-                            leastCorners
-                        )?.let {
-                            newPath = it.first
-                            leastCorners = it.second
+                        val newPath = getOptimalPath(
+                            moves, n, index, visited, path, depth + 1, direction, newCorners, leastCorners
+                        )
+                        if (newPath != null) {
+                            bestPath = newPath.first
+                            leastCorners = newPath.second
                         }
 
                         visited[index] = false
-                        path.removeAt(path.size - 1) //TODO: SLOW
                     }
                 }
             }
 
-            return newPath?.let { Pair(it, leastCorners) } //TODO: VERY VERY SLOW
+            val best = bestPath
+            return if (best != null) Pair(best, leastCorners) else null
         }
 
         private fun getSpaces(): List<BlockPos> {
@@ -298,8 +271,11 @@ object IceFillSolver {
                 val current = queue.removeLast()
                 EnumFacing.HORIZONTALS.forEach { direction ->
                     val next = current.offset(direction)
-                    if (next !in spaces && world.getBlockState(next).block === Blocks.air &&
-                        Utils.equalsOneOf(world.getBlockState(next.down()).block, Blocks.ice, Blocks.packed_ice)
+                    if (next !in spaces && world.getBlockState(next).block === Blocks.air && Utils.equalsOneOf(
+                            world.getBlockState(
+                                next.down()
+                            ).block, Blocks.ice, Blocks.packed_ice
+                        )
                     ) {
                         spaces.add(next)
                         queue.add(next)
