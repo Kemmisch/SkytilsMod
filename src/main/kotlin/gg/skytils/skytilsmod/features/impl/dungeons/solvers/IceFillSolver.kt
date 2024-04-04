@@ -18,12 +18,12 @@
 package gg.skytils.skytilsmod.features.impl.dungeons.solvers
 
 import gg.essential.universal.UChat
-import gg.essential.universal.UKeyboard
 import gg.essential.universal.UMatrixStack
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.features.impl.misc.Funny
+import gg.skytils.skytilsmod.listeners.DungeonListener
 import gg.skytils.skytilsmod.utils.RenderUtil
 import gg.skytils.skytilsmod.utils.SuperSecretSettings
 import gg.skytils.skytilsmod.utils.Utils
@@ -47,16 +47,8 @@ object IceFillSolver {
     private var job: Job? = null
 
     init {
-        //TODO: DEBUG
-        tickTimer(4, repeats = true) {
-            if (UKeyboard.isAltKeyDown()) {
-                job = null
-                puzzles = null
-            }
-        }
         tickTimer(20, repeats = true) {
-            //TODO: DEBUG
-            if (/*!Utils.inDungeons || !Skytils.config.iceFillSolver || "Ice Fill" !in DungeonListener.missingPuzzles ||*/ puzzles != null || job?.isActive == true) return@tickTimer
+            if (!Utils.inDungeons || !Skytils.config.iceFillSolver || "Ice Fill" !in DungeonListener.missingPuzzles || puzzles != null || job?.isActive == true) return@tickTimer
             val player = mc.thePlayer ?: return@tickTimer
             val world = mc.theWorld ?: return@tickTimer
 
@@ -115,8 +107,7 @@ object IceFillSolver {
 
     @SubscribeEvent
     fun onWorldRender(event: RenderWorldLastEvent) {
-        //TODO: DEBUG
-        //if (!Utils.inDungeons || !Skytils.config.iceFillSolver || "Ice Fill" !in DungeonListener.missingPuzzles) return
+        if (!Utils.inDungeons || !Skytils.config.iceFillSolver || "Ice Fill" !in DungeonListener.missingPuzzles) return
         val (three, five, seven) = puzzles ?: return
         val matrixStack = UMatrixStack.Compat.get()
         three.draw(matrixStack, event.partialTicks)
@@ -126,7 +117,7 @@ object IceFillSolver {
 
     @SubscribeEvent
     fun onWorldChange(event: WorldEvent.Unload) {
-        job = null //TODO: IceFillPuzzle would need to check whether it got cancelled or not
+        job = null //TODO: Will not stop an active job
         puzzles = null
     }
 
@@ -162,14 +153,12 @@ object IceFillSolver {
 
             if (optimal) {
                 return getOptimalPath(
-                    //TODO: I hate !!
                     Array(n) { moves[it]!! }, n, startIndex, visited, startPath, 1, facing, 0, Int.MAX_VALUE
                 )?.first?.map { Vec3(spaces.elementAt(it)).addVector(0.5, 0.01, 0.5) }
             } else {
                 val fixed = moves.mapValues { (_, y) -> y.map { it.key } }
 
                 return getFirstPath(
-                    //TODO: I hate !!
                     Array(n) { fixed[it]!! }, n, startIndex, visited, startPath, 1
                 )?.map { Vec3(spaces.elementAt(it)).addVector(0.5, 0.01, 0.5) }
             }
@@ -239,12 +228,12 @@ object IceFillSolver {
                 val move = moves[visiting]
 
                 for ((index, direction) in move) {
-                    if (!visited[index]) { //TODO: Last slow part, the rest of performance is just recursion issues?
+                    if (!visited[index]) { //TODO: Last "slow" part, the rest of performance loss is just recursion
                         visited[index] = true
                         path[depth] = index
 
                         val newCorners = if (lastDirection != direction) corners + 1 else corners
-                        //TODO: Depth check and corner check should be inside here to remove the amount of function calls
+                        //TODO: Depth check and corner check should be inside here to remove the amount of function calls?
 
                         val newPath = getOptimalPath(
                             moves, n, index, visited, path, depth + 1, direction, newCorners, leastCorners
