@@ -128,43 +128,45 @@ object PartyAddons {
 
             val partyLeader = party.first { it.type == PartyMemberType.LEADER }
             component.append(
-                "\n${partyLeader.status}➡§r ${partyLeader.rank}${partyLeader.name}"
+                "\n§eLeader:§r ${partyLeader.status}➡§r ${partyLeader.rank}${partyLeader.name}\n"
             )
 
             val mods = party.filter { it.type == PartyMemberType.MODERATOR }
             if (mods.isNotEmpty()) {
-                component.append("\n§eMods")
+                component.append("\n§eMods\n")
                 mods.forEach {
 
-                    if (self.type != PartyMemberType.LEADER) return@forEach
+                    if (self.type == PartyMemberType.LEADER) {
+                        component.append(
+                            createButton(
+                                "§9[⋀] ",
+                                "/p transfer ${it.name}",
+                                "§9Transfer ${it.name}"
+                            )
+                        ).append(
+                            createButton(
+                                "§c[⋁] ",
+                                "/p demote ${it.name}",
+                                "§cDemote ${it.name}"
+                            )
+                        ).append(
+                            createButton(
+                                "§4[✖]  ",
+                                "/p kick ${it.name}",
+                                "§4Kick ${it.name}"
+                            )
+                        )
+                    }
+
                     component.append(
-                        createButton(
-                            "§a[⋀] ",
-                            "/p promote ${it.name}",
-                            "§aPromote ${it.name}"
-                        )
-                    ).append(
-                        createButton(
-                            "§c[⋁] ",
-                            "/p demote ${it.name}",
-                            "§cDemote ${it.name}"
-                        )
-                    ).append(
-                        createButton(
-                            "§4[✖]",
-                            "/p kick ${it.name}",
-                            "§4Kick ${it.name}"
-                        )
-                    )
-                    component.append(
-                        "\n${it.status}➡§r ${it.rank}${it.name} "
+                        "${it.status}➡§r ${it.rank}${it.name}\n"
                     )
                 }
             }
 
             val members = party.filter { it.type == PartyMemberType.MEMBER }
             if (members.isNotEmpty()) {
-                component.append("\n§eMembers")
+                component.append("\n§eMembers\n")
                 members.forEach {
 
                     if (self.type == PartyMemberType.LEADER) {
@@ -182,7 +184,7 @@ object PartyAddons {
                             )
                         ).append(
                             createButton(
-                                "§4[✖]",
+                                "§4[✖]  ",
                                 "/p kick ${it.name}",
                                 "§4Kick ${it.name}"
                             )
@@ -190,7 +192,7 @@ object PartyAddons {
                     }
 
                     component.append(
-                        "\n${it.status}➡§r ${it.rank}${it.name} "
+                        "${it.status}➡§r ${it.rank}${it.name}\n"
                     )
                 }
             }
