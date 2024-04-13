@@ -42,6 +42,7 @@ repositories {
     mavenCentral()
     maven("https://repo.sk1er.club/repository/maven-public/")
     maven("https://repo.sk1er.club/repository/maven-releases/")
+    maven("https://repo.hypixel.net/repository/Hypixel/")
     maven("https://jitpack.io") {
         mavenContent {
             includeGroupAndSubgroups("com.github")
@@ -66,6 +67,7 @@ loom {
             property("mixin.debug.verbose", "true")
             property("mixin.debug.export", "true")
             property("mixin.dumpTargetOnFailure", "true")
+            property("fml.debugAccessTransformer", "true")
             property("legacy.debugClassLoading", "true")
             property("legacy.debugClassLoadingSave", "true")
             property("legacy.debugClassLoadingFiner", "true")
@@ -78,6 +80,7 @@ loom {
     }
     forge {
         mixinConfig("mixins.skytils.json", "mixins.skytils-events.json")
+        accessTransformer("src/main/resources/META-INF/accesstransformer.cfg")
     }
     mixin {
         defaultRefmapName = "mixins.skytils.refmap.json"
@@ -150,6 +153,8 @@ dependencies {
     shadowMe(project(":events"))
     shadowMe(project(":hypixel-api:types"))
 
+    shadowMe("net.hypixel:mod-api:0.1.7")
+
 
     shadowMe(annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.5")!!)
     annotationProcessor("org.spongepowered:mixin:0.8.5:processor")
@@ -180,6 +185,7 @@ tasks {
             attributes(
                 mapOf(
                     "Main-Class" to "SkytilsInstallerFrame",
+                    "FMLAT" to "accesstransformer.cfg",
                     "FMLCorePlugin" to "gg.skytils.skytilsmod.tweaker.SkytilsLoadingPlugin",
                     "FMLCorePluginContainsFMLMod" to true,
                     "ForceLoadAsMod" to true,
@@ -216,6 +222,7 @@ tasks {
         relocate("kotlinx.serialization", "gg.skytils.ktx-serialization")
         relocate("kotlinx.coroutines", "gg.skytils.ktx-coroutines")
         relocate("gg.essential.vigilance", "gg.skytils.vigilance")
+        relocate("net.hypixel", "gg.skytils.hypixel-net")
 
         exclude(
             "**/LICENSE_MixinExtras",
