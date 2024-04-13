@@ -22,7 +22,6 @@ import gg.essential.universal.UChat
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.events.impl.SendChatMessageEvent
 import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorCommandHandler
-import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorLoadController
 import gg.skytils.skytilsmod.utils.ObservableAddEvent
 import gg.skytils.skytilsmod.utils.ObservableClearEvent
 import gg.skytils.skytilsmod.utils.ObservableRemoveEvent
@@ -32,13 +31,19 @@ import net.minecraftforge.client.ClientCommandHandler
 import net.minecraftforge.fml.common.Loader
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 
-object CommandManager {
+/**
+ * Namespaced commands is a feature which generates namespaces for commands.
+ *
+ * For example, when a mod adds reparty, namespaced commands will generate
+ * a command that includes the id/name of the mod
+ *
+ * `/mod:reparty`
+ *
+ * This is useful when multiple mods register a command with the same name
+ */
+object NamespacedCommands {
     val cch by lazy {
         ClientCommandHandler.instance as AccessorCommandHandler
-    }
-
-    val loadController by lazy {
-        Loader.instance().modController as AccessorLoadController
     }
 
     val aliasMap = mutableMapOf<ICommand, String>()
@@ -66,12 +71,13 @@ object CommandManager {
         }
     }
 
+    /**
+     * This method takes a command and registers the command's namespaced version.
+     */
     fun registerCommandHelper(command: ICommand) {
-        val clazzName = command.javaClass.name
-        val pkg = clazzName.substringBeforeLast('.')
-        val owners = loadController.packageOwners[pkg].distinct()
+        val owners = Loader.instance().modList.filter { command.javaClass.`package`.name in  it.ownedPackages }
         if (owners.size != 1) {
-            println("WARNING! Command $clazzName has ${owners.size}; owners: $owners")
+            println("WARNING! Command ${command.commandName} has ${owners.size}; owners: $owners")
         }
 
         val owner = owners.firstOrNull()
@@ -84,6 +90,12 @@ object CommandManager {
         aliasMap[command] = helper
     }
 
+    /**
+     * Handles the actual sending of the command.
+     *
+     * When a command is sent using the `server` namespace, it is passed directly to the server
+     * instead of running a client command.
+     */
     @SubscribeEvent
     fun onSendChat(event: SendChatMessageEvent) {
         if (event.message.startsWith("/server:")) {

@@ -80,7 +80,6 @@ loom {
     }
     forge {
         mixinConfig("mixins.skytils.json", "mixins.skytils-events.json")
-        accessTransformer("src/main/resources/META-INF/accesstransformer.cfg")
     }
     mixin {
         defaultRefmapName = "mixins.skytils.refmap.json"
@@ -153,7 +152,7 @@ dependencies {
     shadowMe(project(":events"))
     shadowMe(project(":hypixel-api:types"))
 
-    shadowMe("net.hypixel:mod-api:0.1.7")
+    shadowMe("net.hypixel:mod-api:0.2.1")
 
 
     shadowMe(annotationProcessor("io.github.llamalad7:mixinextras-common:0.3.5")!!)
@@ -185,7 +184,6 @@ tasks {
             attributes(
                 mapOf(
                     "Main-Class" to "SkytilsInstallerFrame",
-                    "FMLAT" to "accesstransformer.cfg",
                     "FMLCorePlugin" to "gg.skytils.skytilsmod.tweaker.SkytilsLoadingPlugin",
                     "FMLCorePluginContainsFMLMod" to true,
                     "ForceLoadAsMod" to true,
