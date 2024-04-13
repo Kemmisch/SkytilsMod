@@ -121,7 +121,7 @@ object SheepifyRebellion {
 
     fun checkForFakeModel(entity: AbstractClientPlayer) {
         var fakeEntity: EntityLivingBase? = null
-        if ((SuperSecretSettings.catGaming || (Utils.isBSMod && SkytilsPlus.redeemed)) && entity is EntityPlayerSP) {
+        if (SuperSecretSettings.catGaming) {
             fakeEntity = EntityOcelot(fakeWorld)
             fakeEntity.tameSkin = 3
         } else if (SuperSecretSettings.palworld) {
@@ -152,7 +152,7 @@ object SheepifyRebellion {
                     fakeEntity.isBatHanging = false
                 }
             }
-        } else if (isSkytilsPlus) {
+        } else if (SuperSecretSettings.Sheepify) {
             val color = skytilsPlusColors[entity.name] ?: return
             fakeEntity = EntitySheep(fakeWorld)
             fakeEntity.fleeceColor = color

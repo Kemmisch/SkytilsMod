@@ -169,6 +169,9 @@ class Skytils {
         var usingSBA = false
 
         @JvmField
+        var usingPatcher = false
+
+        @JvmField
         var jarFile: File? = null
         private var lastChatMessage = 0L
 
@@ -386,6 +389,7 @@ class Skytils {
         usingLabymod = Loader.isModLoaded("labymod")
         usingNEU = Loader.isModLoaded("notenoughupdates")
         usingSBA = Loader.isModLoaded("skyblockaddons")
+        usingPatcher = Loader.isModLoaded("patcher")
 
         MayorInfo.fetchMayorData()
 
@@ -407,6 +411,7 @@ class Skytils {
 
         cch.registerCommand(CataCommand)
         cch.registerCommand(CalcXPCommand)
+        cch.registerCommand(KismetProfitCommand)
         cch.registerCommand(FragBotCommand)
         cch.registerCommand(HollowWaypointCommand)
         cch.registerCommand(ItemCycleCommand)
