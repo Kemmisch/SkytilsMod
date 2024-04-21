@@ -32,6 +32,12 @@ public interface AccessorCommandHandler {
     Set<ICommand> getCommandSet();
 
     @Accessor
+    void setCommandSet(Set<ICommand> set);
+
+    @Accessor
     Map<String, ICommand> getCommandMap();
+
+    @Accessor
+    void setCommandMap(Map<String, ICommand> map);
 
 }

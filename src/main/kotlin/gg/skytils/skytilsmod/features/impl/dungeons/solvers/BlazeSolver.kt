@@ -41,8 +41,9 @@ import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.event.entity.living.LivingDeathEvent
 import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import org.spongepowered.asm.mixin.injection.Constant
+import org.spongepowered.asm.mixin.injection.ModifyConstant
 import kotlin.random.Random
-
 object BlazeSolver {
     var orderedBlazes = arrayListOf<ShootableBlaze>()
     var blazeMode = 0
@@ -203,15 +204,32 @@ object BlazeSolver {
                     matrixStack
                 )
                 if (Skytils.config.lineToNextBlaze) {
-                    val secondLowestBlaze = orderedBlazes.getOrNull(1)?.blaze ?: return
-                    RenderUtil.draw3DLine(
-                        Vec3(lowestBlaze.posX, lowestBlaze.posY + 1.5, lowestBlaze.posZ),
-                        Vec3(secondLowestBlaze.posX, secondLowestBlaze.posY + 1.5, secondLowestBlaze.posZ),
-                        5,
-                        Skytils.config.lineToNextBlazeColor,
-                        event.partialTicks,
-                        matrixStack
-                    )
+                    if (Skytils.config.playerBlazeLine) {
+
+
+                        RenderUtil.draw3DLine(
+                            Vec3(lowestBlaze.posX, lowestBlaze.posY + 1.5, lowestBlaze.posZ),
+                            mc.thePlayer.getPositionEyes(event.partialTicks),
+                            2,
+                            Skytils.config.lineToNextBlazeColor,
+                            event.partialTicks,
+                            matrixStack
+                        )
+                    }
+
+                    else {
+
+                        val secondLowestBlaze = orderedBlazes.getOrNull(1)?.blaze ?: return
+                        RenderUtil.draw3DLine(
+                            Vec3(lowestBlaze.posX, lowestBlaze.posY + 1.5, lowestBlaze.posZ),
+                            Vec3(secondLowestBlaze.posX, secondLowestBlaze.posY + 1.5, secondLowestBlaze.posZ),
+                            2,
+                            Skytils.config.lineToNextBlazeColor,
+                            event.partialTicks,
+                            matrixStack
+                        )
+                    }
+
                 }
             }
             if (blazeMode > 0) {
@@ -225,16 +243,32 @@ object BlazeSolver {
                     matrixStack
                 )
                 if (Skytils.config.lineToNextBlaze) {
-                    val secondHighestBlaze = orderedBlazes.getOrNull(orderedBlazes.size - 2)?.blaze ?: return
-                    RenderUtil.draw3DLine(
-                        Vec3(highestBlaze.posX, highestBlaze.posY + 1.5, highestBlaze.posZ),
-                        Vec3(secondHighestBlaze.posX, secondHighestBlaze.posY + 1.5, secondHighestBlaze.posZ),
-                        5,
-                        Skytils.config.lineToNextBlazeColor,
-                        event.partialTicks,
-                        matrixStack
-                    )
+                    if (Skytils.config.playerBlazeLine) {
+
+                            RenderUtil.draw3DLine(
+                                Vec3(highestBlaze.posX, highestBlaze.posY + 1.5, highestBlaze.posZ),
+                                mc.thePlayer.getPositionEyes(event.partialTicks),
+                                2,
+                                Skytils.config.lineToNextBlazeColor,
+                                event.partialTicks,
+                                matrixStack
+                            )
+
+                    }
+                    else {
+                        val secondHighestBlaze = orderedBlazes.getOrNull(orderedBlazes.size - 2)?.blaze ?: return
+                        RenderUtil.draw3DLine(
+                            Vec3(highestBlaze.posX, highestBlaze.posY + 1.5, highestBlaze.posZ),
+                            Vec3(secondHighestBlaze.posX, secondHighestBlaze.posY + 1.5, secondHighestBlaze.posZ),
+                            2,
+                            Skytils.config.lineToNextBlazeColor,
+                            event.partialTicks,
+                            matrixStack
+                        )
+
+                    }
                 }
+
             }
         }
     }
