@@ -62,6 +62,8 @@ import gg.skytils.skytilsmod.gui.OptionsGui
 import gg.skytils.skytilsmod.gui.ReopenableGUI
 import gg.skytils.skytilsmod.listeners.ChatListener
 import gg.skytils.skytilsmod.listeners.DungeonListener
+import gg.skytils.skytilsmod.listeners.ServerPayloadInterceptor
+import gg.skytils.skytilsmod.listeners.ServerPayloadInterceptor.getResponse
 import gg.skytils.skytilsmod.localapi.LocalAPI
 import gg.skytils.skytilsmod.mixins.extensions.ExtensionEntityLivingBase
 import gg.skytils.skytilsmod.mixins.hooks.entity.EntityPlayerSPHook
@@ -83,11 +85,14 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
+import net.hypixel.modapi.packet.impl.clientbound.ClientboundPingPacket
+import net.hypixel.modapi.packet.impl.serverbound.ServerboundPingPacket
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiButton
 import net.minecraft.client.gui.GuiGameOver
 import net.minecraft.client.gui.GuiIngameMenu
 import net.minecraft.client.gui.GuiScreen
+import net.minecraft.client.network.NetHandlerPlayClient
 import net.minecraft.client.settings.KeyBinding
 import net.minecraft.inventory.ContainerChest
 import net.minecraft.launchwrapper.Launch
@@ -167,6 +172,9 @@ class Skytils {
 
         @JvmField
         var usingSBA = false
+
+        @JvmField
+        var usingPatcher = false
 
         @JvmField
         var jarFile: File? = null
@@ -289,6 +297,7 @@ class Skytils {
             LocalAPI,
             MayorInfo,
             SBInfo,
+            ServerPayloadInterceptor,
             SoundQueue,
             UpdateChecker,
 
@@ -387,6 +396,7 @@ class Skytils {
         usingLabymod = Loader.isModLoaded("labymod")
         usingNEU = Loader.isModLoaded("notenoughupdates")
         usingSBA = Loader.isModLoaded("skyblockaddons")
+        usingPatcher = Loader.isModLoaded("patcher")
 
         MayorInfo.fetchMayorData()
 
@@ -408,6 +418,7 @@ class Skytils {
 
         cch.registerCommand(CataCommand)
         cch.registerCommand(CalcXPCommand)
+        cch.registerCommand(KismetProfitCommand)
         cch.registerCommand(FragBotCommand)
         cch.registerCommand(HollowWaypointCommand)
         cch.registerCommand(ItemCycleCommand)
@@ -531,9 +542,18 @@ class Skytils {
                 ?: currentServerData?.serverIP?.lowercase()?.contains("hypixel") ?: false)
         }.onFailure { it.printStackTrace() }.getOrDefault(false)
 
+        if (Utils.isOnHypixel) {
+            onJoinHypixel(event.handler as NetHandlerPlayClient)
+        }
+
         IO.launch {
             TrophyFish.loadFromApi()
         }
+    }
+
+    @SubscribeEvent
+    fun onHypixelPacketFail(event: HypixelPacketEvent.FailedEvent) {
+        UChat.chat("$failPrefix Mod API request failed: ${event.reason}")
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -556,8 +576,11 @@ class Skytils {
             }
         }
         if (!Utils.isOnHypixel && event.packet is S3FPacketCustomPayload && event.packet.channelName == "MC|Brand") {
-            if (event.packet.bufferData.readStringFromBuffer(Short.MAX_VALUE.toInt()).lowercase().contains("hypixel"))
+            val brand = event.packet.bufferData.readStringFromBuffer(Short.MAX_VALUE.toInt())
+            if (brand.lowercase().contains("hypixel")) {
                 Utils.isOnHypixel = true
+                onJoinHypixel(event.handler as NetHandlerPlayClient)
+            }
         }
         if (Utils.inDungeons || !Utils.isOnHypixel || event.packet !is S38PacketPlayerListItem ||
             (event.packet.action != S38PacketPlayerListItem.Action.UPDATE_DISPLAY_NAME &&
@@ -572,6 +595,12 @@ class Skytils {
                     ScoreCalculation.updateText(ScoreCalculation.totalScore.get())
                 return@forEach
             }
+        }
+    }
+
+    fun onJoinHypixel(handler: NetHandlerPlayClient) = IO.launch {
+        ServerboundPingPacket().getResponse<ClientboundPingPacket>(handler).let { packet ->
+            println("Hypixel Pong: ${packet.response}, version ${packet.version}")
         }
     }
 
