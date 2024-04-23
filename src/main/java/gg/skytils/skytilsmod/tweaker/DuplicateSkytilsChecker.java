@@ -20,7 +20,6 @@ package gg.skytils.skytilsmod.tweaker;
 
 import com.google.common.collect.Sets;
 
-import gg.skytils.earlytweaker.utils.Utils;
 import sun.misc.CompoundEnumeration;
 
 
