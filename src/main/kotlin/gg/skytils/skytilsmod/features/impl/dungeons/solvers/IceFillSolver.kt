@@ -169,7 +169,7 @@ object IceFillSolver {
             GlStateManager.disableCull()
 
             path?.zipWithNext { first, second ->
-                RenderUtil.draw3DLine(first, second, 5, Color.MAGENTA, partialTicks, matrixStack, Funny.alphaMult)
+                RenderUtil.draw3DLine(first, second, 5, Color.CYAN, partialTicks, matrixStack, Funny.alphaMult)
             }
 
             GlStateManager.popMatrix()

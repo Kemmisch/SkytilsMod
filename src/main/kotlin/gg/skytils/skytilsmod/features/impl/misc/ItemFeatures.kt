@@ -363,7 +363,7 @@ object ItemFeatures {
                         }
                         if (Skytils.config.showCoinsPerCopper) {
                             var copperValue = copperCosts.getOrDefault(auctionIdentifier, -1)
-                            if (copperValue == -1 && SBInfo.lastOpenContainerName?startsWith("SkyMart ") == true) {
+                            if (copperValue == -1 && SBInfo.lastOpenContainerName?.startsWith("SkyMart ") == true) {
                                 val lore = getItemLore(item!!)
                                 for (i in lore.indices) {
                                     val line = lore[i]

@@ -268,9 +268,9 @@ class Skytils {
 
         var domain = "api.skytils.gg"
 
-        const val prefix = "§9§lSkytils §8»"
-        const val successPrefix = "§a§lSkytils §8»"
-        const val failPrefix = "§c§lSkytils §8»"
+        const val prefix = "§9»"
+        const val successPrefix = "§a»"
+        const val failPrefix = "§c»"
 
         var trustClientTime = false
     }
@@ -551,10 +551,10 @@ class Skytils {
         }
     }
 
-    @SubscribeEvent
+    /*@SubscribeEvent
     fun onHypixelPacketFail(event: HypixelPacketEvent.FailedEvent) {
         UChat.chat("$failPrefix Mod API request failed: ${event.reason}")
-    }
+    }*/
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun onPacket(event: MainReceivePacketEvent<*, *>) {
