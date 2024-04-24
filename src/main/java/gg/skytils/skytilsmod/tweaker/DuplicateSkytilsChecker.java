@@ -20,6 +20,9 @@ package gg.skytils.skytilsmod.tweaker;
 
 import com.google.common.collect.Sets;
 
+import sun.misc.CompoundEnumeration;
+
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
@@ -32,12 +35,14 @@ public class DuplicateSkytilsChecker {
         Enumeration<URL> ggSkytilsUrls = DuplicateSkytilsChecker.class.getClassLoader().getResources("gg/skytils/skytilsmod/Skytils.class");
         Enumeration<URL> skytilsmodUrls = DuplicateSkytilsChecker.class.getClassLoader().getResources("skytils/skytilsmod/Skytils.class");
 
+
         if (ggSkytilsUrls.hasMoreElements() && skytilsmodUrls.hasMoreElements()) {
             HashSet<URL> urls = Sets.newHashSet(Collections.list(ggSkytilsUrls));
             urls.addAll(Collections.list(skytilsmodUrls));
 
             String message = "Duplicate Skytils classes found! Remove the duplicate jar files and try again.\n" + urls;
             throw new RuntimeException(message);
+
         }
     }
 }
