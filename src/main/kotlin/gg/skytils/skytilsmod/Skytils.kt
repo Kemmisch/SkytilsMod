@@ -268,9 +268,11 @@ class Skytils {
 
         var domain = "api.skytils.gg"
 
+
         const val prefix = "§9»"
         const val successPrefix = "§a»"
         const val failPrefix = "§c»"
+
 
         var trustClientTime = false
     }

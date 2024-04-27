@@ -26,8 +26,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -112,6 +110,14 @@ public class SkytilsLoadingPlugin implements IFMLLoadingPlugin {
                     "Please restart your game and allow Essential to update." +
                     "</p></html>";
 
+    private static final String essentialUpdateAvailableMessage =
+            "<html><p>" +
+                    "A new Essential update is available! <br>" +
+                    "Skytils requires this new update in order to function properly. <br>" +
+                    "Please restart your game and accept Essential's update pop-up. <br>" +
+                    "Alternatively, click the \"Accept Essential Update\" button below and restart your game." +
+                    "</p></html>";
+
     private final SkytilsLoadingPluginKt kotlinPlugin;
 
     public SkytilsLoadingPlugin() {
@@ -126,18 +132,24 @@ public class SkytilsLoadingPlugin implements IFMLLoadingPlugin {
                     // removes the pendingUpdateResolution key
                     updatePendingEssentialUpdateStatus(false);
                     JButton acceptEssentialUpdate = new JButton("Accept Essential Update");
-                    acceptEssentialUpdate.addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            // updates the pendingUpdateResolution key to true
-                            updatePendingEssentialUpdateStatus(true);
-                            exit();
-                        }
+                    acceptEssentialUpdate.addActionListener(e -> {
+                        // updates the pendingUpdateResolution key to true
+                        updatePendingEssentialUpdateStatus(true);
+                        exit();
                     });
                     showMessage(essentialUpdateDeniedMessage, acceptEssentialUpdate);
                     exit();
                 } else if (essentialUpdateMode == EssentialPendingUpdateMode.Accepted) {
                     showMessage(essentialUpdateAcceptedMessage);
+                    exit();
+                } else if (essentialUpdateMode == EssentialPendingUpdateMode.Pending){
+                    JButton acceptEssentialUpdate = new JButton("Accept Essential Update");
+                    acceptEssentialUpdate.addActionListener(e -> {
+                        // updates the pendingUpdateResolution key to true
+                        updatePendingEssentialUpdateStatus(true);
+                        exit();
+                    });
+                    showMessage(essentialUpdateAvailableMessage, acceptEssentialUpdate);
                     exit();
                 } else if (essentialUpdateMode == EssentialPendingUpdateMode.NoUpdate) {
                     // FIXME: This should never be reached
@@ -183,7 +195,12 @@ public class SkytilsLoadingPlugin implements IFMLLoadingPlugin {
                 } else if (value.equals("false")) {
                     return EssentialPendingUpdateMode.Denied;
                 }
-                LOGGER.info("Failed to find `pendingUpdateResolution` in properties file.");
+                if (properties.containsKey("pendingUpdateVersion")) {
+                    // can be set when `pendingUpdateResolution` does not exist
+                    // see: https://github.com/EssentialGG/EssentialLoader/blob/79358c93a5f26e4b0440e9c1c964b6f4e2d12615/docs/container-mods.md?plain=1#L89-L91
+                    return EssentialPendingUpdateMode.Pending;
+                }
+                LOGGER.info("Failed to find `pendingUpdateResolution` and `pendingUpdateVersion` in properties file.");
                 return EssentialPendingUpdateMode.NoUpdate;
             } catch (IOException ioe) {
                 LOGGER.fatal("Failed to read essential/essential-loader.properties file", ioe);
@@ -197,6 +214,7 @@ public class SkytilsLoadingPlugin implements IFMLLoadingPlugin {
     private enum EssentialPendingUpdateMode {
         Denied,
         Accepted,
+        Pending,
         NoUpdate
     }
 
