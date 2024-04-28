@@ -25,7 +25,7 @@ import gg.skytils.skytilsmod.commands.BaseCommand
 import gg.skytils.skytilsmod.utils.NumberUtil
 import net.minecraft.client.entity.EntityPlayerSP
 import gg.skytils.skytilsmod.features.impl.handlers.AuctionData
-import gg.skytils.skytilsmod.features.impl.handlers.MayorInfo
+import gg.skytils.skytilsmod.utils.Utils.isMarauder
 
 object KismetProfitCommand : BaseCommand("kismetprofit", aliases = listOf("kismet")) {
     override fun getCommandUsage(player: EntityPlayerSP): String =
@@ -50,13 +50,13 @@ object KismetProfitCommand : BaseCommand("kismetprofit", aliases = listOf("kisme
             ItemDrop(0.0, 0.04, "NECRON_DYE", 10000000),
             ItemDrop(0.0, 0.33, "MASTER_SKULL_TIER_5", 32000000)
         )
-        val marauder = (MayorInfo.currentMayor == "Paul" && MayorInfo.mayorPerks.contains("Marauder")) || MayorInfo.jerryMayor?.name == "Paul"
+
         var averageDropProfit = 0.0
 
         for (drop in seventhLoot) {
 
             val dropChance = if (args.isEmpty()) drop.normalChance else drop.masterChance
-            var itemProfit = ((AuctionData.lowestBINs[drop.skyblockItemID] ?: 0.0) - (drop.chestPrice * (if (marauder) 0.8 else 1.0))) * dropChance / 100.0
+            var itemProfit = ((AuctionData.lowestBINs[drop.skyblockItemID] ?: 0.0) - (drop.chestPrice * (if (isMarauder) 0.8 else 1.0))) * dropChance / 100.0
             if (itemProfit <= 0.0) {
                 itemProfit = 0.0
             }
@@ -69,7 +69,7 @@ object KismetProfitCommand : BaseCommand("kismetprofit", aliases = listOf("kisme
         }
         else {
             UChat.chat("$successPrefix §fKismet Feathers are currently: §6${NumberUtil.nf.format(kismetPrice)}")
-            if (marauder) {
+            if (isMarauder) {
                 UChat.chat("$successPrefix §6Paul - Marauder Perk")
             }
             UChat.chat("$successPrefix §fAverage profit per bedrock chest is currently: §6${NumberUtil.nf.format(averageDropProfit)}" + if (args.isEmpty()) " §b(F7)" else (" §b(M7)"))

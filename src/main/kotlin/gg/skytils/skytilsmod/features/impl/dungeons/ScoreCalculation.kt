@@ -23,13 +23,12 @@ import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.GuiManager
 import gg.skytils.skytilsmod.core.structure.GuiElement
-import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.events.impl.MainReceivePacketEvent
 import gg.skytils.skytilsmod.features.impl.dungeons.DungeonFeatures.dungeonFloorNumber
-import gg.skytils.skytilsmod.features.impl.handlers.MayorInfo
 import gg.skytils.skytilsmod.listeners.DungeonListener
 import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorChatComponentText
 import gg.skytils.skytilsmod.utils.*
+import gg.skytils.skytilsmod.utils.Utils.isEZPZ
 import gg.skytils.skytilsmod.utils.graphics.ScreenRenderer
 import gg.skytils.skytilsmod.utils.graphics.SmartFontRenderer.TextAlignment
 import gg.skytils.skytilsmod.utils.graphics.colors.CommonColors
@@ -197,8 +196,8 @@ object ScoreCalculation {
     // bonus stuff
     var crypts = BasicState(0)
     var mimicKilled = BasicState(false)
-    var isPaul = BasicState(false)
-    val bonusScore = (crypts.zip(mimicKilled.zip(isPaul))).map { (crypts, bools) ->
+    var isEZPZ = BasicState(false)
+    val bonusScore = (crypts.zip(mimicKilled.zip(isEZPZ))).map { (crypts, bools) ->
         ((if (bools.first) 2 else 0) + crypts.coerceAtMost(5) + if (bools.second) 10 else 0)
     }
 
@@ -295,10 +294,10 @@ object ScoreCalculation {
 
                 if (DungeonFeatures.dungeonFloor == "E") {
                     ScoreCalculationElement.text.add("§f• §eBonus Score:§a ${(bonusScore.get() * 0.7).toInt()}")
-                    ScoreCalculationElement.text.add("§f• §eTotal Score:§a $score" + if (isPaul.get()) " §7(§6+7§7)" else "")
+                    ScoreCalculationElement.text.add("§f• §eTotal Score:§a $score" + if (isEZPZ.get()) " §7(§6+7§7)" else "")
                 } else {
                     ScoreCalculationElement.text.add("§f• §eBonus Score:§a ${bonusScore.get()}")
-                    ScoreCalculationElement.text.add("§f• §eTotal Score:§a $score" + if (isPaul.get()) " §7(§6+10§7)" else "")
+                    ScoreCalculationElement.text.add("§f• §eTotal Score:§a $score" + if (isEZPZ.get()) " §7(§6+10§7)" else "")
                 }
                 ScoreCalculationElement.text.add("§f• §eRank: $rank")
 
@@ -424,13 +423,7 @@ object ScoreCalculation {
         }
     }
 
-    init {
-        tickTimer(5, repeats = true) {
-            isPaul.set(
-                (MayorInfo.currentMayor == "Paul" && MayorInfo.mayorPerks.contains("EZPZ")) || MayorInfo.jerryMayor?.name == "Paul"
-            )
-        }
-    }
+
 
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     fun onChatReceived(event: ClientChatReceivedEvent) {

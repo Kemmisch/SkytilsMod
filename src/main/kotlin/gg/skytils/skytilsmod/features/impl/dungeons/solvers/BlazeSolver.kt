@@ -41,8 +41,6 @@ import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.event.entity.living.LivingDeathEvent
 import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import org.spongepowered.asm.mixin.injection.Constant
-import org.spongepowered.asm.mixin.injection.ModifyConstant
 import kotlin.random.Random
 object BlazeSolver {
     var orderedBlazes = arrayListOf<ShootableBlaze>()

@@ -18,12 +18,16 @@
 package gg.skytils.skytilsmod.features.impl.events
 
 import com.google.common.collect.EvictingQueue
+import gg.essential.universal.UChat
 import gg.essential.universal.UMatrixStack
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
+import gg.skytils.skytilsmod.core.GuiManager
 import gg.skytils.skytilsmod.events.impl.MainReceivePacketEvent
 import gg.skytils.skytilsmod.events.impl.PacketEvent
+import gg.skytils.skytilsmod.features.impl.handlers.MayorInfo
 import gg.skytils.skytilsmod.utils.*
+import gg.skytils.skytilsmod.utils.Utils.isMytho
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.init.Blocks
 import net.minecraft.item.ItemStack
@@ -34,6 +38,7 @@ import net.minecraft.util.AxisAlignedBB
 import net.minecraft.util.BlockPos
 import net.minecraft.util.EnumParticleTypes
 import net.minecraft.util.Vec3i
+import net.minecraft.util.Vec3
 import net.minecraftforge.client.event.ClientChatReceivedEvent
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.event.world.WorldEvent
@@ -47,9 +52,10 @@ object GriffinBurrows {
     val particleBurrows = hashMapOf<BlockPos, ParticleBurrow>()
     var lastDugParticleBurrow: BlockPos? = null
     val recentlyDugParticleBurrows: EvictingQueue<BlockPos> = EvictingQueue.create(5)
-
+    val inquisitorRegex = Regex("§9Party §8> (?<rank>§.\\[\\S{3,13}] |§7)(?<name>[^§]{1,13})§f: §?r?x:? ?(?<x>[^, y]{0,4}),? ?y:? ?(?<y>[^, z]{0,4}),? ?z:? ?(?<z>[^, §r]{0,4}) §?r?")
     var hasSpadeInHotbar = false
-
+    data class Inquisitor(var coords: Vec3, val spawnTime: Long, val spawner: String)
+    var lastInq = Inquisitor(Vec3(-2.5, 70.0, -69.5), 0,"null")
 
     @SubscribeEvent
     fun onTick(event: ClientTickEvent) {
@@ -61,7 +67,7 @@ object GriffinBurrows {
 
     @SubscribeEvent(receiveCanceled = true, priority = EventPriority.HIGHEST)
     fun onChat(event: ClientChatReceivedEvent) {
-        if (event.type == 2.toByte()) return
+        if (event.type == 2.toByte() || SBInfo.mode != SkyblockIsland.Hub.mode || !isMytho) {return}
         val unformatted = event.message.unformattedText.stripControlCodes()
         if (Skytils.config.showGriffinBurrows &&
             (unformatted.startsWith("You died") || unformatted.startsWith("☠ You were killed") ||
@@ -77,11 +83,23 @@ object GriffinBurrows {
                 lastDugParticleBurrow = null
             }
         }
+        if (event.message.unformattedText.contains("\$INQ\$") || event.message.unformattedText.contains("§r§eYou dug out ") && event.message.unformattedText.contains("Inquis") && Skytils.config.sendInquisitorCoords) {
+            Skytils.sendMessageQueue.add("/pc x: ${mc.thePlayer.posX.toInt()} y: ${mc.thePlayer.posY.toInt()} z: ${mc.thePlayer.posZ.toInt()}")
+        }
+        if (Skytils.config.drawInquisitorCoords && inquisitorRegex.matches(event.message.unformattedText)) {
+            val inqPartyMessage = inquisitorRegex.find(event.message.unformattedText)
+            val rank = inqPartyMessage?.groups?.get("rank")?.value?.trim().toString()
+            val spawnerName = inqPartyMessage?.groups?.get("name")?.value?.trim().toString()
+            lastInq = Inquisitor(Vec3(inqPartyMessage?.groups?.get("x")?.value?.trim()?.toDoubleOrNull() ?: return,inqPartyMessage?.groups?.get("y")?.value?.trim()?.toDoubleOrNull() ?: return,inqPartyMessage?.groups?.get("z")?.value?.trim()?.toDoubleOrNull() ?: return),System.currentTimeMillis(),spawnerName)
+            UChat.chat("§6Inquisitor §ffound by $rank $spawnerName§r")
+            GuiManager.createTitle("§6[§r§b§kr§r§6]§r §3$spawnerName's§r §6Inquisitor [§r§b§kr§r§6]§r",200)
+
+        }
     }
 
     @SubscribeEvent
     fun onSendPacket(event: PacketEvent.SendEvent) {
-        if (!Utils.inSkyblock || !Skytils.config.showGriffinBurrows || mc.theWorld == null || mc.thePlayer == null) return
+        if (!Utils.inSkyblock || !Skytils.config.showGriffinBurrows || mc.theWorld == null || mc.thePlayer == null || SBInfo.mode != SkyblockIsland.Hub.mode || !isMytho) return
         val pos =
             when {
                 event.packet is C07PacketPlayerDigging && event.packet.status == C07PacketPlayerDigging.Action.START_DESTROY_BLOCK -> {
@@ -99,6 +117,7 @@ object GriffinBurrows {
 
     @SubscribeEvent
     fun onWorldRender(event: RenderWorldLastEvent) {
+        if (SBInfo.mode != SkyblockIsland.Hub.mode || !isMytho) {return}
         if (Skytils.config.showGriffinBurrows) {
             val matrixStack = UMatrixStack()
             for (pb in particleBurrows.values) {
@@ -106,6 +125,18 @@ object GriffinBurrows {
                     pb.drawWaypoint(event.partialTicks, matrixStack)
                 }
             }
+        }
+        if (Skytils.config.drawInquisitorCoords && (System.currentTimeMillis() - lastInq.spawnTime) < 30000 && lastInq.spawner!=mc.thePlayer.name && mc.thePlayer.position.distanceSq(Vec3i(
+                lastInq.coords.x.toInt(),lastInq.coords.y.toInt(),lastInq.coords.z.toInt())) >= 144) {
+            val matrixStack = UMatrixStack()
+            RenderUtil.draw3DLine(
+                lastInq.coords,
+                mc.thePlayer.getPositionEyes(event.partialTicks),
+                2,
+                Color.cyan,
+                event.partialTicks,
+                matrixStack
+            )
         }
     }
 
@@ -117,9 +148,9 @@ object GriffinBurrows {
 
     @SubscribeEvent
     fun onReceivePacket(event: MainReceivePacketEvent<*, *>) {
-        if (!Utils.inSkyblock) return
+        if (!Utils.inSkyblock || SBInfo.mode != SkyblockIsland.Hub.mode) return
         if (Skytils.config.showGriffinBurrows && hasSpadeInHotbar && event.packet is S2APacketParticles) {
-            if (SBInfo.mode != SkyblockIsland.Hub.mode) return
+            if (SBInfo.mode != SkyblockIsland.Hub.mode || !isMytho) return
             event.packet.apply {
                 val type = ParticleType.getParticleType(this) ?: return
                 val pos = BlockPos(x, y, z).down()
