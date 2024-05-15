@@ -1614,6 +1614,28 @@ object Config : Vigilant(
     var trackMythEvent = false
 
     @Property(
+        type = PropertyType.SWITCH, name = "Send Inquisitor Coords",
+        description = "Sends coordiantes of inquisitors you dig up to party chat.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Tracker", "Inquisitor"],
+        i18nName = "skytils.config.events.mythological.send_inquisitor_coords",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var sendInquisitorCoords = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Receive Inquisitor Coords",
+        description = "Draws coordiantes of inquisitors from party chat.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Tracker", "Inquisitor"],
+        i18nName = "skytils.config.events.mythological.draw_inquisitor_coords",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var drawInquisitorCoords = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Trick or Treat Chest Alert",
         description = "Displays a title when any trick or treat chest spawns near you.",
         category = "Events", subcategory = "Spooky",

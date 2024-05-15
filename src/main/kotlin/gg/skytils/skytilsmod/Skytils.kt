@@ -530,6 +530,9 @@ class Skytils {
                     if (DevTools.toggles.getOrDefault("forcehypixel", false)) Utils.isOnHypixel = true
                     if (DevTools.toggles.getOrDefault("forceskyblock", false)) Utils.skyblock = true
                     if (DevTools.toggles.getOrDefault("forcedungeons", false)) Utils.dungeons = true
+                    if (DevTools.toggles.getOrDefault("forcemarauder", false)) Utils.marauder = true
+                    if (DevTools.toggles.getOrDefault("forceezpz", false)) Utils.ezpz = true
+                    if (DevTools.toggles.getOrDefault("forcemytho", false)) Utils.mytho = true
                 }
                 if (DevTools.getToggle("sprint"))
                     KeyBinding.setKeyBindState(mc.gameSettings.keyBindSprint.keyCode, true)
