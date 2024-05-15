@@ -23,11 +23,11 @@ import gg.essential.universal.UMatrixStack
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.GuiManager
+import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.events.impl.MainReceivePacketEvent
 import gg.skytils.skytilsmod.events.impl.PacketEvent
 import gg.skytils.skytilsmod.features.impl.handlers.MayorInfo
 import gg.skytils.skytilsmod.utils.*
-import gg.skytils.skytilsmod.utils.Utils.isMytho
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.init.Blocks
 import net.minecraft.item.ItemStack
@@ -52,11 +52,11 @@ object GriffinBurrows {
     val particleBurrows = hashMapOf<BlockPos, ParticleBurrow>()
     var lastDugParticleBurrow: BlockPos? = null
     val recentlyDugParticleBurrows: EvictingQueue<BlockPos> = EvictingQueue.create(5)
-    val inquisitorRegex = Regex("§9Party §8> (?<rank>§.\\[\\S{3,13}] |§7)(?<name>[^§]{1,13})§f: §?r?x:? ?(?<x>[^, y]{0,4}),? ?y:? ?(?<y>[^, z]{0,4}),? ?z:? ?(?<z>[^, §r]{0,4}) §?r?")
+    val inquisitorRegex = Regex("§9Party §8> (?<rank>§.\\[\\S{2,13}] |§7)(?<name>[^§]{1,16})§f: §?r?x:? ?(?<x>[^, y]{0,4}),? ?y:? ?(?<y>[^, z]{0,4}),? ?z:? ?(?<z>[^, §r]{0,4}) §?r?")
     var hasSpadeInHotbar = false
     data class Inquisitor(var coords: Vec3, val spawnTime: Long, val spawner: String)
     var lastInq = Inquisitor(Vec3(-2.5, 70.0, -69.5), 0,"null")
-
+    var isMytho = false
     @SubscribeEvent
     fun onTick(event: ClientTickEvent) {
         if (event.phase != TickEvent.Phase.START) return
@@ -67,7 +67,7 @@ object GriffinBurrows {
 
     @SubscribeEvent(receiveCanceled = true, priority = EventPriority.HIGHEST)
     fun onChat(event: ClientChatReceivedEvent) {
-        if (event.type == 2.toByte() || SBInfo.mode != SkyblockIsland.Hub.mode || !isMytho) {return}
+        if (event.type == 2.toByte() || SBInfo.mode != SkyblockIsland.Hub.mode) {return}
         val unformatted = event.message.unformattedText.stripControlCodes()
         if (Skytils.config.showGriffinBurrows &&
             (unformatted.startsWith("You died") || unformatted.startsWith("☠ You were killed") ||
@@ -249,7 +249,13 @@ object GriffinBurrows {
                 }
             }
     }
-
+    init {
+        tickTimer(5, repeats = true) {
+            isMytho = (
+                (MayorInfo.currentMayor == "Diana" && MayorInfo.mayorPerks.contains("Mythological Ritual")) || MayorInfo.jerryMayor?.name == "Diana"
+            )
+        }
+    }
     private val ItemStack?.isSpade
         get() = ItemUtil.getSkyBlockItemID(this) == "ANCESTRAL_SPADE"
 
