@@ -351,6 +351,7 @@ skytils.config.slayer.voidgloom_seraph.highlight_yang_glyph=Highlight Yang Glyph
 skytils.config.slayer.voidgloom_seraph.point_to_yang_glyph=Point to Yang Glyph
 skytils.config.slayer.voidgloom_seraph.yang_glyph_highlight_color=Yang Glyph Highlight Color
 skytils.config.slayer.voidgloom_seraph.highlight_nukekebi_fixation_heads=Highlight Nukekebi Fixation Heads
+skytils.config.slayer.voidgloom_seraph.point_to_nukekebi_fixation_heads=Point to Nukekebi Fixation Heads
 skytils.config.slayer.voidgloom_seraph.nukekebi_fixation_head_color=Nukekebi Fixation Head Color
 skytils.config.slayer.voidgloom_seraph.show_soulflow_display=Show Soulflow Display
 skytils.config.slayer.voidgloom_seraph.low_soulflow_ping=Low Soulflow Ping

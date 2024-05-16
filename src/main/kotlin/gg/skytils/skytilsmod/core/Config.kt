@@ -3689,6 +3689,16 @@ object Config : Vigilant(
     var highlightNukekebiHeads = false
 
     @Property(
+        PropertyType.SWITCH, name = "Point to Nukebi Fixations",
+        description = "Draws an arrow in the direction of the Nukebi Fixations.",
+        category = "Slayer", subcategory = "Voidgloom Seraph",
+        i18nName = "skytils.config.slayer.voidgloom_seraph.point_to_nukebi_fixation_heads",
+        i18nCategory = "skytils.config.slayer",
+        i18nSubcategory = "skytils.config.slayer.voidgloom_seraph"
+    )
+    var pointNukebiHeads = false
+
+    @Property(
         PropertyType.COLOR, name = "Nukekebi Fixation Head Color",
         description = "Changes the color for the Nukekebi Fixation Head Highlight",
         category = "Slayer", subcategory = "Voidgloom Seraph",

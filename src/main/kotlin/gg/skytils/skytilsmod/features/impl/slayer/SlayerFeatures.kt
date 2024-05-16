@@ -73,10 +73,7 @@ import net.minecraft.item.ItemStack
 import net.minecraft.network.play.server.S02PacketChat
 import net.minecraft.network.play.server.S1CPacketEntityMetadata
 import net.minecraft.network.play.server.S29PacketSoundEffect
-import net.minecraft.util.AxisAlignedBB
-import net.minecraft.util.ChatComponentText
-import net.minecraft.util.IChatComponent
-import net.minecraft.util.MathHelper
+import net.minecraft.util.*
 import net.minecraftforge.client.event.RenderLivingEvent
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.event.entity.EntityJoinWorldEvent
@@ -436,12 +433,23 @@ object SlayerFeatures : CoroutineScope {
                     val x = head.posX - viewerX
                     val y = head.posY - viewerY
                     val z = head.posZ - viewerZ
+                    if (!Skytils.config.pointNukebiHeads) {
                     drawFilledBoundingBox(
                         matrixStack,
                         AxisAlignedBB(x - 0.25, y + 0.5, z - 0.25, x + 0.25, y + 1.5, z + 0.25),
                         Skytils.config.nukekebiHeadColor,
                         1f
-                    )
+                    ) } else {
+                        RenderUtil.draw3DLine(
+                            mc.thePlayer.getPositionEyes(event.partialTicks),
+                            Vec3(x,y,z),
+                            2,
+                            Color.pink,
+                            event.partialTicks,
+                            matrixStack,
+                            0.4F
+                        )
+                    }
                     UGraphics.enableDepth()
                     GlStateManager.enableCull()
                 }
