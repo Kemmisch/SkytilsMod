@@ -1574,6 +1574,13 @@ object Config : Vigilant(
 
     // TODO: Add translations
     @Property(
+        type = PropertyType.SWITCH, name = "Ping when Burrow is Nearby",
+        description = "Pings when a burrow is nearby.",
+        category = "Events", subcategory = "Mythological"
+    )
+    var pingNearbyBurrow = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Griffin Burrow Estimation",
         description = "Estimates griffin burrow position after using spade near the previous burrow.",
         category = "Events", subcategory = "Mythological"
@@ -4418,7 +4425,9 @@ object Config : Vigilant(
         arrayOf(
             "emptyBurrowColor",
             "mobBurrowColor",
-            "treasureBurrowColor"
+            "treasureBurrowColor",
+            "burrowEstimation",
+            "pingNearbyBurrow"
         ).forEach { propertyName -> addDependency(propertyName, "showGriffinBurrows") }
 
         addDependency("activePetColor", "highlightActivePet")

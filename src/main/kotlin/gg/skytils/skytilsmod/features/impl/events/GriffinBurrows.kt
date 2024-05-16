@@ -25,6 +25,10 @@ import gg.essential.universal.UMatrixStack
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.GuiManager
+import gg.essential.universal.UMatrixStack
+import gg.skytils.skytilsmod.Skytils
+import gg.skytils.skytilsmod.Skytils.Companion.mc
+import gg.skytils.skytilsmod.core.SoundQueue
 import gg.skytils.skytilsmod.events.impl.MainReceivePacketEvent
 import gg.skytils.skytilsmod.events.impl.PacketEvent
 import gg.skytils.skytilsmod.utils.*
@@ -58,6 +62,7 @@ object GriffinBurrows {
     var lastDugParticleBurrow: BlockPos? = null
     val recentlyDugParticleBurrows: EvictingQueue<BlockPos> = EvictingQueue.create(5)
     val inquisitorRegex = Regex("§r§9Party §8> (?<rank>§.(\\[.*])?) ?(?<name>[^ §]{2,16})§f: §r[ xX:]{1,4}(?<x>[\\d-.]{1,7})[, yY:]{1,5}(?<y>[\\d-.]{1,7})[, zZ:]{1,5}(?<z>[\\d-.]{1,7}),? ?§?r?")
+    val recentlyDugParticleBurrows = EvictingQueue.create<BlockPos>(5)
     var hasSpadeInHotbar = false
 
 
@@ -121,6 +126,13 @@ object GriffinBurrows {
             UChat.chat("§6Inquisitor §ffound by $rank $spawnerName§r")
             GuiManager.createTitle("§6[§r§b§kr§r§6]§r §3$spawnerName's§r §6Inquisitor [§r§b§kr§r§6]§r",200)
 
+        if (event.message.formattedText == "§r§6Poof! §r§eYou have cleared your griffin burrows!§r") {
+            particleBurrows.clear()
+            recentlyDugParticleBurrows.clear()
+            lastDugParticleBurrow = null
+            BurrowEstimation.guesses.clear()
+            BurrowEstimation.arrows.clear()
+
         }
     }
 
@@ -148,7 +160,7 @@ object GriffinBurrows {
         if (Skytils.config.showGriffinBurrows) {
             val matrixStack = UMatrixStack()
             for (pb in particleBurrows.values) {
-                if (pb.hasEnchant && pb.hasFootstep && pb.type.get() != -1) {
+                if (pb.hasEnchant && pb.hasFootstep && pb.type != -1) {
                     pb.drawWaypoint(event.partialTicks, matrixStack)
                 }
             }
@@ -218,19 +230,24 @@ object GriffinBurrows {
                         val burrow = particleBurrows.getOrPut(pos) {
                             ParticleBurrow(pos, hasFootstep = false, hasEnchant = false)
                         }
+                        if (burrow.type == -1 && type.isBurrowType) {
+                            if (Skytils.config.pingNearbyBurrow) {
+                                SoundQueue.addToQueue("random.orb", 0.8f, 1f, 0, true)
+                            }
+                        }
                         when (type) {
                             ParticleType.FOOTSTEP -> burrow.hasFootstep = true
                             ParticleType.ENCHANT -> burrow.hasEnchant = true
-                            ParticleType.EMPTY -> burrow.type.set(0)
-                            ParticleType.MOB -> burrow.type.set(1)
-                            ParticleType.TREASURE -> burrow.type.set(2)
+                            ParticleType.EMPTY -> burrow.type = 0
+                            ParticleType.MOB -> burrow.type = 1
+                            ParticleType.TREASURE -> burrow.type = 2
                         }
                     }
 
                 }
             }
             is S04PacketEntityEquipment -> {
-                if (!Skytils.config.burrowEstimation) return
+                if (!Skytils.config.burrowEstimation || SBInfo.mode != SkyblockIsland.Hub.mode) return
                 val entity = mc.theWorld?.getEntityByID(event.packet.entityID)
                 (entity as? EntityArmorStand)?.let { armorStand ->
                     if (event.packet.itemStack?.item != Items.arrow) return
@@ -248,7 +265,7 @@ object GriffinBurrows {
                 }
             }
             is S29PacketSoundEffect -> {
-                if (!Skytils.config.burrowEstimation) return
+                if (!Skytils.config.burrowEstimation || SBInfo.mode != SkyblockIsland.Hub.mode) return
                 if (event.packet.soundName != "note.harp") return
                 val (arrow, distance) = BurrowEstimation.arrows.keys
                     .associateWith { arrow ->
@@ -284,8 +301,8 @@ object GriffinBurrows {
             BlockPos(x, y, z)
         }
 
-        protected abstract val waypointText: State<String>
-        protected abstract val color: State<Color>
+        abstract val waypointText: String
+        abstract val color: Color
         fun drawWaypoint(partialTicks: Float, matrixStack: UMatrixStack) {
             val (viewerX, viewerY, viewerZ) = RenderUtil.getViewerPos(partialTicks)
             val renderX = this.x - viewerX
@@ -297,13 +314,13 @@ object GriffinBurrows {
             RenderUtil.drawFilledBoundingBox(
                 matrixStack,
                 AxisAlignedBB(renderX, renderY, renderZ, renderX + 1, renderY + 1, renderZ + 1).expandBlock(),
-                this.color.get(),
+                this.color,
                 (0.1f + 0.005f * distSq.toFloat()).coerceAtLeast(0.2f)
             )
             GlStateManager.disableTexture2D()
-            if (distSq > 5 * 5) RenderUtil.renderBeaconBeam(renderX, renderY + 1, renderZ, this.color.get().rgb, 1.0f, partialTicks)
+            if (distSq > 5 * 5) RenderUtil.renderBeaconBeam(renderX, renderY + 1, renderZ, this.color.rgb, 1.0f, partialTicks)
             RenderUtil.renderWaypointText(
-                waypointText.get(),
+                waypointText,
                 x + 0.5,
                 y + 5.0,
                 z + 0.5,
@@ -322,8 +339,8 @@ object GriffinBurrows {
         override val y: Int,
         override val z: Int
     ) : Diggable() {
-        override val waypointText = BasicState("§aBurrow §6(Guess)")
-        override val color = BasicState(Color.ORANGE)
+        override val waypointText = "§aBurrow §6(Guess)"
+        override val color = Color.ORANGE
     }
 
     data class ParticleBurrow(
@@ -341,31 +358,35 @@ object GriffinBurrows {
             hasEnchant
         )
 
-        val type = BasicState(-1)
-
-        override val waypointText = type.map {
-            "${
-                when (it) {
-                    0 -> "§aStart"
-                    1 -> "§cMob"
-                    2 -> "§6Treasure"
-                    else -> "§7Unknown"
+        var type = -1
+            set(value) {
+                field = value
+                when (value) {
+                    0 -> {
+                        waypointText = "§aStart §a(Particle)"
+                        color = Skytils.config.emptyBurrowColor
+                    }
+                    1 -> {
+                        waypointText = "§cMob §a(Particle)"
+                        color = Skytils.config.mobBurrowColor
+                    }
+                    2 -> {
+                        waypointText = "§6Treasure §a(Particle)"
+                        color = Skytils.config.treasureBurrowColor
+                    }
                 }
-            } §a(Particle)"
-        }
-        override val color = type.map {
-            when (it) {
-                0 -> Skytils.config.emptyBurrowColor
-                1 -> Skytils.config.mobBurrowColor
-                2 -> Skytils.config.treasureBurrowColor
-                else -> Color.WHITE
             }
-        }
+
+        override var waypointText = "§7Unknown §a(Particle)"
+            private set
+
+        override var color = Color.WHITE
+            private set
     }
     private val ItemStack?.isSpade
         get() = ItemUtil.getSkyBlockItemID(this) == "ANCESTRAL_SPADE"
 
-    private enum class ParticleType(val check: S2APacketParticles.() -> Boolean) {
+    private enum class ParticleType(val check: S2APacketParticles.() -> Boolean, val isBurrowType: Boolean = true) {
         EMPTY({
             type == EnumParticleTypes.CRIT_MAGIC && count == 4 && speed == 0.01f && xOffset == 0.5f && yOffset == 0.1f && zOffset == 0.5f
         }),
@@ -378,10 +399,10 @@ object GriffinBurrows {
         }),
         FOOTSTEP({
             type == EnumParticleTypes.FOOTSTEP && count == 1 && speed == 0.0f && xOffset == 0.05f && yOffset == 0.0f && zOffset == 0.05f
-        }),
+        }, false),
         ENCHANT({
             type == EnumParticleTypes.ENCHANTMENT_TABLE && count == 5 && speed == 0.05f && xOffset == 0.5f && yOffset == 0.4f && zOffset == 0.5f
-        });
+        }, false);
 
         companion object {
             fun getParticleType(packet: S2APacketParticles): ParticleType? {
