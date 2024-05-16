@@ -197,8 +197,8 @@ object ScoreCalculation {
     // bonus stuff
     var crypts = BasicState(0)
     var mimicKilled = BasicState(false)
-    var isPaul = BasicState(false)
-    val bonusScore = (crypts.zip(mimicKilled.zip(isPaul))).map { (crypts, bools) ->
+    var isEZPZ = BasicState(false)
+    val bonusScore = (crypts.zip(mimicKilled.zip(isEZPZ))).map { (crypts, bools) ->
         ((if (bools.first) 2 else 0) + crypts.coerceAtMost(5) + if (bools.second) 10 else 0)
     }
 
@@ -295,10 +295,10 @@ object ScoreCalculation {
 
                 if (DungeonFeatures.dungeonFloor == "E") {
                     ScoreCalculationElement.text.add("§f• §eBonus Score:§a ${(bonusScore.get() * 0.7).toInt()}")
-                    ScoreCalculationElement.text.add("§f• §eTotal Score:§a $score" + if (isPaul.get()) " §7(§6+7§7)" else "")
+                    ScoreCalculationElement.text.add("§f• §eTotal Score:§a $score" + if (isEZPZ.get()) " §7(§6+7§7)" else "")
                 } else {
                     ScoreCalculationElement.text.add("§f• §eBonus Score:§a ${bonusScore.get()}")
-                    ScoreCalculationElement.text.add("§f• §eTotal Score:§a $score" + if (isPaul.get()) " §7(§6+10§7)" else "")
+                    ScoreCalculationElement.text.add("§f• §eTotal Score:§a $score" + if (isEZPZ.get()) " §7(§6+10§7)" else "")
                 }
                 ScoreCalculationElement.text.add("§f• §eRank: $rank")
 
@@ -426,7 +426,7 @@ object ScoreCalculation {
 
     init {
         tickTimer(5, repeats = true) {
-            isPaul.set(
+            isEZPZ.set(
                 (MayorInfo.currentMayor == "Paul" && MayorInfo.mayorPerks.contains("EZPZ")) || MayorInfo.jerryMayor?.name == "Paul"
             )
         }
