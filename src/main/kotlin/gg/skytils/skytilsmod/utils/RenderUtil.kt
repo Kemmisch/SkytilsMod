@@ -57,6 +57,7 @@ object RenderUtil {
     private val RARITY2 = ResourceLocation("skytils", "gui/rarity2.png")
     private val RARITY3 = ResourceLocation("skytils", "gui/rarity3.png")
     private val RARITY4 = ResourceLocation("skytils", "gui/rarity4.png")
+    private val RARITY5 = ResourceLocation("skytils", "gui/rarity5.png")
     private val CUSTOMRARITY = ResourceLocation("skytils", "gui/customrarity.png")
     private val beaconBeam = ResourceLocation("textures/entity/beacon_beam.png")
     private val mutex = ReentrantLock()
@@ -494,7 +495,8 @@ object RenderUtil {
                 1 -> RARITY2
                 2 -> RARITY3
                 3 -> RARITY4
-                4 -> CUSTOMRARITY
+                4 -> RARITY5
+                5 -> CUSTOMRARITY
                 else -> RARITY
             }
         )

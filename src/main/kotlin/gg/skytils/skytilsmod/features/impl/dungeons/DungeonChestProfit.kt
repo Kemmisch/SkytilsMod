@@ -240,7 +240,7 @@ object DungeonChestProfit {
             )
         ) {
             val chestType = DungeonChest.getFromName(event.chestName) ?: return
-            if (chestType.value >= Skytils.config.kismetRerollThreshold * 1_000_000) {
+            if (chestType.value >= Skytils.config.kismetRerollThreshold) {
                 event.isCanceled = true
                 EssentialAPI.getNotifications()
                     .push(

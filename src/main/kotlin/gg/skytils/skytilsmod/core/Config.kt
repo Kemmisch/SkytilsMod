@@ -655,9 +655,9 @@ object Config : Vigilant(
 
     @Property(
         type = PropertyType.NUMBER, name = "Dungeon Chest Reroll Protection Threshold",
-        description = "Prevents rerolling if the value of the items is higher than this value in millions.",
+        description = "Prevents rerolling if the value of the items is higher than this value.",
         category = "Dungeons", subcategory = "Quality of Life",
-        max = 1000,
+        max = 1000000000,
         i18nName = "skytils.config.dungeons.quality_of_life.dungeon_chest_reroll_protection_threshold",
         i18nCategory = "skytils.config.dungeons",
         i18nSubcategory = "skytils.config.dungeons.quality_of_life"
@@ -1081,14 +1081,24 @@ object Config : Vigilant(
     var showNextBlaze = false
 
     @Property(
-        type = PropertyType.SWITCH, name = "Line to Next Blaze",
-        description = "Draws line to next blaze to shoot in Higher or Lower.",
+        type = PropertyType.SWITCH, name = "Line Between Blazes",
+        description = "Draws line between current blaze and next blaze to shoot in Higher or Lower.",
         category = "Dungeons", subcategory = "Solvers",
         i18nName = "skytils.config.dungeons.solvers.line_to_next_blaze",
         i18nCategory = "skytils.config.dungeons",
         i18nSubcategory = "skytils.config.dungeons.solvers"
     )
     var lineToNextBlaze = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Line To Next Blaze ",
+        description = "Draws line to next blaze to shoot in Higher or Lower.",
+        category = "Dungeons", subcategory = "Solvers",
+        i18nName = "skytils.config.dungeons.solvers.player_blaze_line",
+        i18nCategory = "skytils.config.dungeons",
+        i18nSubcategory = "skytils.config.dungeons.solvers"
+    )
+    var playerBlazeLine = false
 
     @Property(
         type = PropertyType.COLOR, name = "Lowest Blaze Color",
@@ -1128,7 +1138,7 @@ object Config : Vigilant(
         i18nCategory = "skytils.config.dungeons",
         i18nSubcategory = "skytils.config.dungeons.solvers"
     )
-    var lineToNextBlazeColor = Color(255, 255, 0, 200)
+    var lineToNextBlazeColor = Color(255, 255, 0, 125)
 
     @Property(
         type = PropertyType.SWITCH, name = "Boulder Solver",
@@ -1616,6 +1626,28 @@ object Config : Vigilant(
         i18nSubcategory = "skytils.config.events.mythological"
     )
     var trackMythEvent = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Send Inquisitor Coords",
+        description = "Sends coordiantes of inquisitors you dig up to party chat.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Tracker", "Inquisitor"],
+        i18nName = "skytils.config.events.mythological.send_inquisitor_coords",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var sendInquisitorCoords = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Receive Inquisitor Coords",
+        description = "Draws coordiantes of inquisitors from party chat.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Tracker", "Inquisitor"],
+        i18nName = "skytils.config.events.mythological.draw_inquisitor_coords",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var drawInquisitorCoords = false
 
     @Property(
         type = PropertyType.SWITCH, name = "Trick or Treat Chest Alert",
@@ -3669,6 +3701,16 @@ object Config : Vigilant(
         i18nSubcategory = "skytils.config.slayer.voidgloom_seraph"
     )
     var highlightNukekebiHeads = false
+
+    @Property(
+        PropertyType.SWITCH, name = "Point to Nukebi Fixations",
+        description = "Draws an arrow in the direction of the Nukebi Fixations.",
+        category = "Slayer", subcategory = "Voidgloom Seraph",
+        i18nName = "skytils.config.slayer.voidgloom_seraph.point_to_nukebi_fixation_heads",
+        i18nCategory = "skytils.config.slayer",
+        i18nSubcategory = "skytils.config.slayer.voidgloom_seraph"
+    )
+    var pointNukebiHeads = false
 
     @Property(
         PropertyType.COLOR, name = "Nukekebi Fixation Head Color",
