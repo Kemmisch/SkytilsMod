@@ -92,7 +92,7 @@ object GriffinBurrows {
 
 
     data class Inquisitor(var coords: Vec3, val spawnTime: Long, val spawner: String)
-    var lastInq = Inquisitor(Vec3(-2.5, 70.0, -69.5), 0,"null"
+    var lastInq = Inquisitor(Vec3(-2.5, 70.0, -69.5), 0,"null"))
                              
     @SubscribeEvent
     fun onTick(event: ClientTickEvent) {
