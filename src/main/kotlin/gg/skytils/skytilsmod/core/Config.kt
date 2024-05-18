@@ -1588,6 +1588,13 @@ object Config : Vigilant(
     var burrowEstimation = false
 
     @Property(
+        type = PropertyType.SWITCH, name = "Griffin Burrow Estimation (MEOW)",
+        description = "Estimates griffin burrow position after using spade ANYWHERE. Use of this mode will disable the other mode.",
+        category = "Events", subcategory = "Mythological"
+    )
+    var experimentBurrowEstimation = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Broadcast Rare Drop Notifications",
         description = "Sends rare drop notification when you obtain a rare drop from a Mythological Creature.",
         category = "Events", subcategory = "Mythological",
@@ -4427,7 +4434,8 @@ object Config : Vigilant(
             "mobBurrowColor",
             "treasureBurrowColor",
             "burrowEstimation",
-            "pingNearbyBurrow"
+            "pingNearbyBurrow",
+            "experimentBurrowEstimation"
         ).forEach { propertyName -> addDependency(propertyName, "showGriffinBurrows") }
 
         addDependency("activePetColor", "highlightActivePet")

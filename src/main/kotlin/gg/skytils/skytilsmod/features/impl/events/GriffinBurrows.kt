@@ -25,12 +25,16 @@ import gg.essential.universal.UMatrixStack
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.GuiManager
+import gg.essential.universal.UChat
 import gg.essential.universal.UMatrixStack
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.SoundQueue
 import gg.skytils.skytilsmod.events.impl.MainReceivePacketEvent
 import gg.skytils.skytilsmod.events.impl.PacketEvent
+import gg.skytils.skytilsmod.features.impl.events.GriffinBurrows.BurrowEstimation.lastParticleTrail
+import gg.skytils.skytilsmod.features.impl.events.GriffinBurrows.BurrowEstimation.lastSoundTrail
+import gg.skytils.skytilsmod.features.impl.events.GriffinBurrows.BurrowEstimation.otherGrassData
 import gg.skytils.skytilsmod.utils.*
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.entity.item.EntityArmorStand
@@ -53,9 +57,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
 import java.awt.Color
 import java.time.Duration
 import java.time.Instant
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.*
 
 object GriffinBurrows {
     val particleBurrows = hashMapOf<BlockPos, ParticleBurrow>()
@@ -64,11 +66,16 @@ object GriffinBurrows {
     val inquisitorRegex = Regex("§r§9Party §8> (?<rank>§.(\\[.*])?) ?(?<name>[^ §]{2,16})§f: §r[ xX:]{1,4}(?<x>[\\d-.]{1,7})[, yY:]{1,5}(?<y>[\\d-.]{1,7})[, zZ:]{1,5}(?<z>[\\d-.]{1,7}),? ?§?r?")
     val recentlyDugParticleBurrows = EvictingQueue.create<BlockPos>(5)
     var hasSpadeInHotbar = false
+    var lastSpadeUse = -1L
 
 
     object BurrowEstimation {
         val arrows = mutableMapOf<Arrow, Instant>()
         val guesses = mutableMapOf<BurrowGuess, Instant>()
+        val lastParticleTrail = mutableListOf<Vec3>()
+        val lastSoundTrail = linkedSetOf<Pair<Vec3, Double>>()
+        var lastTrailCreated = -1L
+
         fun getDistanceFromPitch(pitch: Double) =
             2805 * pitch - 1375
 
@@ -76,12 +83,17 @@ object GriffinBurrows {
             this::class.java.getResource("/assets/skytils/grassdata.txt")!!.readBytes()
         }
 
+        val otherGrassData by lazy {
+            this::class.java.getResource("/assets/skytils/hub_grass_heights.bin")!!.readBytes()
+        }
+
         class Arrow(val directionVector: Vec3, val pos: Vec3)
     }
 
-    data class Inquisitor(var coords: Vec3, val spawnTime: Long, val spawner: String)
-    var lastInq = Inquisitor(Vec3(-2.5, 70.0, -69.5), 0,"null")
 
+    data class Inquisitor(var coords: Vec3, val spawnTime: Long, val spawner: String)
+    var lastInq = Inquisitor(Vec3(-2.5, 70.0, -69.5), 0,"null"
+                             
     @SubscribeEvent
     fun onTick(event: ClientTickEvent) {
         if (event.phase != TickEvent.Phase.START) return
@@ -94,6 +106,66 @@ object GriffinBurrows {
         }
         BurrowEstimation.arrows.entries.removeIf { (_, instant) ->
             Duration.between(instant, Instant.now()).toMillis() > 30_000L
+        }
+        if (!Skytils.config.experimentBurrowEstimation) return
+        if (lastSoundTrail.size >= 2 && lastParticleTrail.size >= 2 && System.currentTimeMillis() - BurrowEstimation.lastTrailCreated > 1000) {
+            printDevMessage("Trail found $lastParticleTrail", "griffinguess")
+            printDevMessage("Sound trail $lastSoundTrail", "griffinguess")
+
+            // chat did I get a 5 on the exam?
+            // https://apcentral.collegeboard.org/media/pdf/statistics-formula-sheet-and-tables-2020.pdf
+            val pitches = lastSoundTrail.map { it.second }
+            val xMean = (lastSoundTrail.size - 1) / 2.0
+            val xStd = sqrt(lastSoundTrail.indices.sumOf {
+                (it - xMean) * (it - xMean)
+            }) / (lastSoundTrail.size - 1)
+
+            val yMean = pitches.average()
+            val yStd = sqrt(pitches.sumOf {
+                (it - yMean) * (it - yMean)
+            }) / (pitches.size - 1)
+
+            val numerator = lastSoundTrail.withIndex().sumOf { (i, pair) ->
+                (i - xMean) * (pair.second - yMean)
+            }
+
+            val denominatorX = sqrt(lastSoundTrail.indices.sumOf { (it - xMean) * (it - xMean) })
+            val denominatorY = sqrt(pitches.sumOf { (it - yMean) * (it - yMean) })
+
+            val r = numerator / (denominatorX * denominatorY)
+
+            val slope = r * yStd / xStd
+
+            if (r < 0.95) UChat.chat("${Skytils.failPrefix} §cWarning: low correlation, r = $r. Burrow guess may be incorrect.")
+
+            printDevMessage("Slope $slope, xbar $xMean, sx $xStd, ybar $yMean, sy $yStd, r $r", "griffinguess")
+
+            val trail = lastParticleTrail.asReversed()
+
+            // formula for distance guess comes from soopyboo32
+            val distanceGuess = E / slope
+            printDevMessage("Distance guess $distanceGuess", "griffinguess")
+
+            val directionVector = trail[0].subtract(trail[1]).normalize()
+            printDevMessage("Direction vector $directionVector", "griffinguess")
+
+            val guessPos = trail.last().add(
+                directionVector * distanceGuess
+            )
+            printDevMessage("Guess pos $guessPos", "griffinguess")
+
+            // offset of 300 blocks for both x and z
+            // x ranges from 195 to -281
+            // z ranges from 207 to -233
+
+            fun getIndex(x: Int, z: Int) = (x - -281) + (z - -233) * (195 - -281 + 1)
+
+            val guess = BurrowGuess(guessPos.x.toInt(), otherGrassData.getOrNull(getIndex(guessPos.x.toInt(), guessPos.z.toInt()))?.toInt() ?: 0, guessPos.z.toInt())
+            BurrowEstimation.guesses[guess] = Instant.now()
+
+            lastParticleTrail.clear()
+            BurrowEstimation.lastTrailCreated = -1
+            lastSoundTrail.clear()
         }
     }
 
@@ -133,24 +205,31 @@ object GriffinBurrows {
             BurrowEstimation.guesses.clear()
             BurrowEstimation.arrows.clear()
 
+
+
+            lastParticleTrail.clear()
+            BurrowEstimation.lastTrailCreated = -1
+            lastSpadeUse = -1
+            lastSoundTrail.clear()
+
         }
     }
 
     @SubscribeEvent
     fun onSendPacket(event: PacketEvent.SendEvent) {
+
         if (!Utils.inSkyblock || !Skytils.config.showGriffinBurrows || mc.theWorld == null || mc.thePlayer == null || SBInfo.mode != SkyblockIsland.Hub.mode) return
         val pos =
             when {
                 event.packet is C07PacketPlayerDigging && event.packet.status == C07PacketPlayerDigging.Action.START_DESTROY_BLOCK -> {
                     event.packet.position
+
                 }
-                event.packet is C08PacketPlayerBlockPlacement && event.packet.stack != null -> event.packet.position
-                else -> return
+            if (mc.theWorld.getBlockState(pos).block !== Blocks.grass) return
+            particleBurrows[pos]?.blockPos?.let {
+                printDevMessage("Clicked on $it", "griffin")
+                lastDugParticleBurrow = it
             }
-        if (mc.thePlayer.heldItem?.isSpade != true || mc.theWorld.getBlockState(pos).block !== Blocks.grass) return
-        particleBurrows[pos]?.blockPos?.let {
-            printDevMessage("Clicked on $it", "griffin")
-            lastDugParticleBurrow = it
         }
     }
 
@@ -212,42 +291,44 @@ object GriffinBurrows {
                 if (Skytils.config.showGriffinBurrows && hasSpadeInHotbar) {
                     if (SBInfo.mode != SkyblockIsland.Hub.mode) return
                     event.packet.apply {
-                        val type = ParticleType.getParticleType(this) ?: return
-                        val pos = BlockPos(x, y, z).down()
-                        if (recentlyDugParticleBurrows.contains(pos)) return
-                        BurrowEstimation.guesses.keys.associateWith { guess ->
-                            pos.distanceSq(
-                                guess.x.toDouble(),
-                                guess.y.toDouble(),
-                                guess.z.toDouble()
-                            )
-                        }.minByOrNull { it.value }?.let { (guess, distance) ->
-                            printDevMessage("Nearest guess is $distance blocks away", "griffin", "griffinguess")
-                            if (distance <= 625) {
-                                BurrowEstimation.guesses.remove(guess)
+                        if (type == EnumParticleTypes.DRIP_LAVA && count == 2 && speed == -.5f && xOffset == 0f && yOffset == 0f && zOffset == 0f && isLongDistance) {
+                            lastParticleTrail.add(vec3)
+                            BurrowEstimation.lastTrailCreated = System.currentTimeMillis()
+                            printDevMessage("Found trail point $x $y $z", "griffinguess")
+                        } else {
+                            val type = ParticleType.getParticleType(this) ?: return
+                            val pos = BlockPos(x, y, z).down()
+                            if (recentlyDugParticleBurrows.contains(pos)) return
+                            BurrowEstimation.guesses.keys.associateWith { guess ->
+                                (pos.x - guess.x) * (pos.x - guess.x) + (pos.z - guess.z) * (pos.z - guess.z)
+                            }.minByOrNull { it.value }?.let { (guess, distance) ->
+                                // printDevMessage("Nearest guess is $distance blocks^2 away", "griffin", "griffinguess")
+                                if (distance <= 25 * 25) {
+                                    BurrowEstimation.guesses.remove(guess)
+                                }
                             }
-                        }
-                        val burrow = particleBurrows.getOrPut(pos) {
-                            ParticleBurrow(pos, hasFootstep = false, hasEnchant = false)
-                        }
-                        if (burrow.type == -1 && type.isBurrowType) {
-                            if (Skytils.config.pingNearbyBurrow) {
-                                SoundQueue.addToQueue("random.orb", 0.8f, 1f, 0, true)
+                            val burrow = particleBurrows.getOrPut(pos) {
+                                ParticleBurrow(pos, hasFootstep = false, hasEnchant = false)
                             }
-                        }
-                        when (type) {
-                            ParticleType.FOOTSTEP -> burrow.hasFootstep = true
-                            ParticleType.ENCHANT -> burrow.hasEnchant = true
-                            ParticleType.EMPTY -> burrow.type = 0
-                            ParticleType.MOB -> burrow.type = 1
-                            ParticleType.TREASURE -> burrow.type = 2
+                            if (burrow.type == -1 && type.isBurrowType) {
+                                if (Skytils.config.pingNearbyBurrow) {
+                                    SoundQueue.addToQueue("random.orb", 0.8f, 1f, 0, true)
+                                }
+                            }
+                            when (type) {
+                                ParticleType.FOOTSTEP -> burrow.hasFootstep = true
+                                ParticleType.ENCHANT -> burrow.hasEnchant = true
+                                ParticleType.EMPTY -> burrow.type = 0
+                                ParticleType.MOB -> burrow.type = 1
+                                ParticleType.TREASURE -> burrow.type = 2
+                            }
                         }
                     }
 
                 }
             }
             is S04PacketEntityEquipment -> {
-                if (!Skytils.config.burrowEstimation || SBInfo.mode != SkyblockIsland.Hub.mode) return
+                if (!Skytils.config.burrowEstimation || SBInfo.mode != SkyblockIsland.Hub.mode || Skytils.config.experimentBurrowEstimation) return
                 val entity = mc.theWorld?.getEntityByID(event.packet.entityID)
                 (entity as? EntityArmorStand)?.let { armorStand ->
                     if (event.packet.itemStack?.item != Items.arrow) return
@@ -266,7 +347,12 @@ object GriffinBurrows {
             }
             is S29PacketSoundEffect -> {
                 if (!Skytils.config.burrowEstimation || SBInfo.mode != SkyblockIsland.Hub.mode) return
-                if (event.packet.soundName != "note.harp") return
+                if (event.packet.soundName != "note.harp" || event.packet.volume != 1f) return
+                printDevMessage("Found note harp sound ${event.packet.pitch} ${event.packet.volume} ${event.packet.x} ${event.packet.y} ${event.packet.z}", "griffinguess")
+                if (lastSpadeUse != -1L && System.currentTimeMillis() - lastSpadeUse < 1000) {
+                    lastSoundTrail.add(Vec3(event.packet.x, event.packet.y, event.packet.z) to event.packet.pitch.toDouble())
+                }
+                if (Skytils.config.experimentBurrowEstimation) return
                 val (arrow, distance) = BurrowEstimation.arrows.keys
                     .associateWith { arrow ->
                         arrow.pos.squareDistanceTo(event.packet.x, event.packet.y, event.packet.z)
