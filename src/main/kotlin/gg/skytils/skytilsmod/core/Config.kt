@@ -1650,6 +1650,39 @@ object Config : Vigilant(
     var drawInquisitorCoords = false
 
     @Property(
+        type = PropertyType.SWITCH, name = "Mytho Mob Info",
+        description = "Shows information on mythological mobs on screen.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Burrow", "Borrow"],
+        i18nName = "skytils.config.events.mythological.mytho_mob_info",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var mythoMobInfo = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Mytho Mob Health",
+        description = "Shows health of mythological mobs on screen.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Burrow", "Borrow"],
+        i18nName = "skytils.config.events.mythological.mytho_mob_health",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var mythoMobHealth = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Information on last Inquisitor",
+        description = "Shows info on last inquisitor.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Burrow", "Borrow","Inquisitor"],
+        i18nName = "skytils.config.events.mythological.last_inq_info",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var lastInqInfo = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Trick or Treat Chest Alert",
         description = "Displays a title when any trick or treat chest spawns near you.",
         category = "Events", subcategory = "Spooky",
@@ -4437,6 +4470,9 @@ object Config : Vigilant(
             "pingNearbyBurrow",
             "experimentBurrowEstimation"
         ).forEach { propertyName -> addDependency(propertyName, "showGriffinBurrows") }
+
+        addDependency("mythoMobHealth", "mythoMobInfo")
+        addDependency("lastInqInfo", "mythoMobInfo")
 
         addDependency("activePetColor", "highlightActivePet")
         addDependency("favoritePetColor", "highlightFavoritePets")
