@@ -20,11 +20,14 @@ package gg.skytils.skytilsmod.events.impl
 import gg.skytils.skytilsmod.events.SkytilsEvent
 import net.hypixel.modapi.error.ErrorReason
 import net.hypixel.modapi.packet.ClientboundHypixelPacket
+import net.hypixel.modapi.packet.HypixelPacket
+import net.hypixel.modapi.packet.HypixelPacketType
 import net.minecraftforge.fml.common.eventhandler.Cancelable
 
 @Cancelable
 abstract class HypixelPacketEvent : SkytilsEvent() {
     abstract val direction: Direction
+
 
     class ReceiveEvent(val packet: ClientboundHypixelPacket) : HypixelPacketEvent() {
         override val direction: Direction = Direction.INBOUND
@@ -35,6 +38,7 @@ abstract class HypixelPacketEvent : SkytilsEvent() {
     }
 
     class FailedEvent(val type: String, val reason: ErrorReason) : HypixelPacketEvent() {
+
         override val direction: Direction = Direction.OUTBOUND
     }
 

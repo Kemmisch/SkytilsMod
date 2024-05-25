@@ -184,13 +184,16 @@ object CatlasElement : GuiElement(name = "Dungeon Map", x = 0, y = 0) {
 
             val name = mutableListOf<String>()
 
-            if (CatlasConfig.mapRoomNames != 0 && Utils.equalsOneOf(
+            if (CatlasConfig.mapRoomNames == 1 && Utils.equalsOneOf(
                     roomType,
                     RoomType.PUZZLE,
                     RoomType.TRAP
+                ) || CatlasConfig.mapRoomNames == 3 && Utils.equalsOneOf(
+                    roomType,
+                    RoomType.NORMAL, RoomType.RARE, RoomType.CHAMPION, RoomType.PUZZLE, RoomType.TRAP
                 ) || CatlasConfig.mapRoomNames == 2 && Utils.equalsOneOf(
                     roomType,
-                    RoomType.NORMAL, RoomType.RARE, RoomType.CHAMPION
+                    RoomType.RARE
                 )
             ) {
                 name.addAll(room.data.name.split(" "))

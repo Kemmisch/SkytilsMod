@@ -22,13 +22,17 @@ import gg.essential.universal.UChat
 import gg.essential.universal.UMatrixStack
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
+import gg.skytils.skytilsmod.core.GuiManager
 import gg.skytils.skytilsmod.core.SoundQueue
+import gg.skytils.skytilsmod.core.structure.GuiElement
+import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.events.impl.MainReceivePacketEvent
 import gg.skytils.skytilsmod.events.impl.PacketEvent
 import gg.skytils.skytilsmod.features.impl.events.GriffinBurrows.BurrowEstimation.lastParticleTrail
 import gg.skytils.skytilsmod.features.impl.events.GriffinBurrows.BurrowEstimation.lastSoundTrail
 import gg.skytils.skytilsmod.features.impl.events.GriffinBurrows.BurrowEstimation.otherGrassData
 import gg.skytils.skytilsmod.utils.*
+import gg.skytils.skytilsmod.utils.graphics.ScreenRenderer
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.entity.item.EntityArmorStand
 import net.minecraft.init.Blocks
@@ -51,14 +55,40 @@ import java.awt.Color
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.*
+import kotlin.time.Duration.Companion.milliseconds
 
 object GriffinBurrows {
+
+    data class Inquisitor(var coords: Vec3, val spawnTime: Long, val spawner: String)
+
     val particleBurrows = hashMapOf<BlockPos, ParticleBurrow>()
     var lastDugParticleBurrow: BlockPos? = null
     val recentlyDugParticleBurrows = EvictingQueue.create<BlockPos>(5)
+    val coordsRegex = Regex("§r§9Party §8> (?<rank>§.(\\[.*])?) ?(?<name>[^ §]{2,16})§f: §r[ xX:]{0,4}(?<x>[\\d-.]{1,7})[, yY:]{1,5}(?<y>[\\d-.]{1,7})[, zZ:]{1,5}(?<z>[\\d-.]{1,7}),? ?§?r?")
 
     var hasSpadeInHotbar = false
     var lastSpadeUse = -1L
+    var lastInq = Inquisitor(Vec3(-2.5, 70.0, -69.5), 0,"null")
+    var mythoMobs = mutableListOf<EntityArmorStand>()
+
+
+    init {
+        MythoMobDisplay()
+        tickTimer(2,repeats=true) {
+            getMythoMobs()
+        }
+    }
+
+    fun getMythoMobs() {
+        if (!Utils.inSkyblock || SBInfo.mode != SkyblockIsland.Hub.mode || !Skytils.config.mythoMobHealth || mc.thePlayer == null || mc.theWorld == null) return
+        for (entity in mc.theWorld.loadedEntityList) {
+            if (entity is EntityArmorStand && (entity.name.containsAny("Exalted","Stalwart","Minos"))) {
+                if (entity.name.contains(" §e0§f/") || entity.isDead && entity in mythoMobs) {mythoMobs.remove(entity);return}
+                if (entity in mythoMobs) return
+                mythoMobs.add(entity)
+            }
+        }
+    }
 
     object BurrowEstimation {
         val arrows = mutableMapOf<Arrow, Instant>()
@@ -89,7 +119,7 @@ object GriffinBurrows {
         }
         if (!Skytils.config.burrowEstimation) return
         BurrowEstimation.guesses.entries.removeIf { (_, instant) ->
-            Duration.between(instant, Instant.now()).toMinutes() > 2
+            Duration.between(instant, Instant.now()).toMinutes() > 1
         }
         BurrowEstimation.arrows.entries.removeIf { (_, instant) ->
             Duration.between(instant, Instant.now()).toMillis() > 30_000L
@@ -185,6 +215,17 @@ object GriffinBurrows {
             lastSpadeUse = -1
             lastSoundTrail.clear()
         }
+        if (Skytils.config.drawInquisitorCoords && coordsRegex.matches(event.message.formattedText)) {
+            val coordsPartyMessage = coordsRegex.find(event.message.formattedText)
+            val senderName = coordsPartyMessage?.groups?.get("name")?.value?.trim() ?: return
+            val senderRank = coordsPartyMessage?.groups?.get("rank")?.value?.trim() ?: return
+            lastInq = Inquisitor(Vec3(coordsPartyMessage?.groups?.get("x")?.value?.trim()?.toDoubleOrNull() ?: return,coordsPartyMessage?.groups?.get("y")?.value?.trim()?.toDoubleOrNull() ?: return,coordsPartyMessage?.groups?.get("z")?.value?.trim()?.toDoubleOrNull() ?: return),System.currentTimeMillis(),senderName)
+            UChat.chat("§6Inquisitor §ffound by $senderRank $senderName§r")
+            GuiManager.createTitle("§6[§r§b§kr§r§6]§r §3$senderName's§r §6Inquisitor [§r§b§kr§r§6]§r",100)
+        }
+        if (Skytils.config.sendInquisitorCoords && (event.message.formattedText.contains("\$INQ\$") || (event.message.formattedText.contains("§r§eYou dug out ") && event.message.unformattedText.contains("Inquis")))) {
+            Skytils.sendMessageQueue.add("/pc x: ${mc.thePlayer.posX.toInt()}, y: ${mc.thePlayer.posY.toInt()}, z: ${mc.thePlayer.posZ.toInt()}")
+        }
     }
 
     @SubscribeEvent
@@ -217,6 +258,7 @@ object GriffinBurrows {
 
     @SubscribeEvent
     fun onWorldRender(event: RenderWorldLastEvent) {
+        if (!Utils.inSkyblock || SBInfo.mode != SkyblockIsland.Hub.mode) return
         if (Skytils.config.showGriffinBurrows) {
             val matrixStack = UMatrixStack()
             for (pb in particleBurrows.values) {
@@ -244,12 +286,25 @@ object GriffinBurrows {
                 }
             }
         }
+        if (lastInq.spawner != mc.thePlayer.name && Skytils.config.drawInquisitorCoords && (System.currentTimeMillis() - lastInq.spawnTime) < 30000 && mc.thePlayer.position.distanceSq(Vec3i(
+                    lastInq.coords.x.toInt(), lastInq.coords.y.toInt(), lastInq.coords.z.toInt())) >= 144) {
+            val matrixStack = UMatrixStack()
+            RenderUtil.draw3DLine(
+                lastInq.coords,
+                mc.thePlayer.getPositionEyes(event.partialTicks),
+                2,
+                Color.cyan,
+                event.partialTicks,
+                matrixStack
+            )
+        }
     }
 
     @SubscribeEvent
     fun onWorldChange(event: WorldEvent.Unload) {
         particleBurrows.clear()
         recentlyDugParticleBurrows.clear()
+        mythoMobs.clear()
     }
 
     @SubscribeEvent
@@ -271,7 +326,7 @@ object GriffinBurrows {
                             BurrowEstimation.guesses.keys.associateWith { guess ->
                                 (pos.x - guess.x) * (pos.x - guess.x) + (pos.z - guess.z) * (pos.z - guess.z)
                             }.minByOrNull { it.value }?.let { (guess, distance) ->
-                                // printDevMessage("Nearest guess is $distance blocks^2 away", "griffin", "griffinguess")
+                                printDevMessage("Nearest guess is $distance blocks^2 away", "griffin", "griffinguess")
                                 if (distance <= 25 * 25) {
                                     BurrowEstimation.guesses.remove(guess)
                                 }
@@ -437,7 +492,6 @@ object GriffinBurrows {
         override var color = Color.WHITE
             private set
     }
-
     private val ItemStack?.isSpade
         get() = ItemUtil.getSkyBlockItemID(this) == "ANCESTRAL_SPADE"
 
@@ -468,4 +522,45 @@ object GriffinBurrows {
             }
         }
     }
+
+    class MythoMobDisplay : GuiElement("Mytho Mob Health Display",x = 0.5F,y = 0.5F) {
+        override fun render() {
+            if (toggled && Utils.inSkyblock && SBInfo.mode == SkyblockIsland.Hub.mode) {
+                val text = ArrayList<String>()
+                if (Skytils.config.lastInqInfo && System.currentTimeMillis() - lastInq.spawnTime < 1000*60*60*3) {
+                    text.add("Last Inq: §b${lastInq.spawner} §8@ ${(-lastInq.spawnTime+System.currentTimeMillis()).milliseconds.toComponents { hours, minutes, seconds, _ ->
+                        "§6${hours}h${minutes}m${seconds}s"
+                    }} §8ago.")
+                } else {
+                    text.add("§8No recent Inquisitors.")
+                }
+                if (mythoMobs.isNotEmpty() && Skytils.config.mythoMobHealth) {
+                    mythoMobs.forEach { text.add("${it.name}") }
+                }
+                RenderUtil.drawAllInList(this, if (text.isNotEmpty()) text else return)
+
+            }
+        }
+
+        override fun demoRender() {
+            val demoText = ArrayList<String>()
+            demoText.add("§6Last Inq: §bsongreaver §8@ §60h10m15s §8ago")
+            demoText.add("§8[§7Lv210§8] §c§2Exalted Minotaur§r §e0§f/§a2.5M§c❤")
+            RenderUtil.drawAllInList(this, demoText)
+        }
+
+
+        override val height: Int
+            get() = ScreenRenderer.fontRenderer.FONT_HEIGHT
+        override val width: Int
+            get() = ScreenRenderer.fontRenderer.getStringWidth("§8[§7Lv210§8] §c§2Exalted Minotaur§r §e0§f/§a2.5M§c❤")
+        override val toggled: Boolean
+            get() = Skytils.config.mythoMobInfo
+
+        init {
+            Skytils.guiManager.registerElement(this)
+        }
+    }
+
+
 }

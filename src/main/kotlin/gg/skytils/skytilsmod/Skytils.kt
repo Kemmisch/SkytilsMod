@@ -64,6 +64,7 @@ import gg.skytils.skytilsmod.gui.ReopenableGUI
 import gg.skytils.skytilsmod.listeners.ChatListener
 import gg.skytils.skytilsmod.listeners.DungeonListener
 import gg.skytils.skytilsmod.listeners.ServerPayloadInterceptor
+import gg.skytils.skytilsmod.listeners.ServerPayloadInterceptor.getResponse
 import gg.skytils.skytilsmod.localapi.LocalAPI
 import gg.skytils.skytilsmod.mixins.extensions.ExtensionEntityLivingBase
 import gg.skytils.skytilsmod.mixins.hooks.entity.EntityPlayerSPHook
@@ -87,6 +88,8 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
+import net.hypixel.modapi.packet.impl.clientbound.ClientboundPingPacket
+import net.hypixel.modapi.packet.impl.serverbound.ServerboundPingPacket
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiButton
 import net.minecraft.client.gui.GuiGameOver
@@ -172,6 +175,9 @@ class Skytils {
 
         @JvmField
         var usingSBA = false
+
+        @JvmField
+        var usingPatcher = false
 
         @JvmField
         var jarFile: File? = null
@@ -269,9 +275,11 @@ class Skytils {
 
         var domain = "api.skytils.gg"
 
-        const val prefix = "§9§lSkytils §8»"
-        const val successPrefix = "§a§lSkytils §8»"
-        const val failPrefix = "§c§lSkytils (${Reference.VERSION}) §8»"
+
+        const val prefix = "§9»"
+        const val successPrefix = "§a»"
+        const val failPrefix = "§c»"
+
 
         var trustClientTime = false
     }
@@ -398,6 +406,7 @@ class Skytils {
         usingLabymod = Loader.isModLoaded("labymod")
         usingNEU = Loader.isModLoaded("notenoughupdates")
         usingSBA = Loader.isModLoaded("skyblockaddons")
+        usingPatcher = Loader.isModLoaded("patcher")
 
         MayorInfo.fetchMayorData()
 
@@ -422,6 +431,7 @@ class Skytils {
         cch.registerCommand(FragBotCommand)
         cch.registerCommand(HollowWaypointCommand)
         cch.registerCommand(ItemCycleCommand)
+        cch.registerCommand(KismetProfitCommand)
         cch.registerCommand(LimboCommand)
         cch.registerCommand(OrderedWaypointCommand)
         cch.registerCommand(ScamCheckCommand)
@@ -522,12 +532,15 @@ class Skytils {
     }
 
     init {
-        tickTimer(20, repeats = true) {
+        tickTimer(200, repeats = true) {
             if (mc.thePlayer != null) {
-                if (deobfEnvironment) {
+                if (true) {
                     if (DevTools.toggles.getOrDefault("forcehypixel", false)) Utils.isOnHypixel = true
                     if (DevTools.toggles.getOrDefault("forceskyblock", false)) Utils.skyblock = true
                     if (DevTools.toggles.getOrDefault("forcedungeons", false)) Utils.dungeons = true
+                    if (DevTools.toggles.getOrDefault("forcemarauder", false)) Utils.marauder = true
+                    if (DevTools.toggles.getOrDefault("forceezpz", false)) Utils.ezpz = true
+                    if (DevTools.toggles.getOrDefault("forcemytho", false)) Utils.mytho = true
                 }
                 if (DevTools.getToggle("sprint"))
                     KeyBinding.setKeyBindState(mc.gameSettings.keyBindSprint.keyCode, true)
@@ -543,6 +556,10 @@ class Skytils {
                 ?: currentServerData?.serverIP?.lowercase()?.contains("hypixel") ?: false)
         }.onFailure { it.printStackTrace() }.getOrDefault(false)
 
+        if (Utils.isOnHypixel) {
+            onJoinHypixel(event.handler as NetHandlerPlayClient)
+        }
+
         IO.launch {
             TrophyFish.loadFromApi()
         }
@@ -556,6 +573,11 @@ class Skytils {
     fun onHypixelPacketFail(event: HypixelPacketEvent.FailedEvent) {
         UChat.chat("$failPrefix Mod API request failed: ${event.reason}")
     }
+
+    /*@SubscribeEvent
+    fun onHypixelPacketFail(event: HypixelPacketEvent.FailedEvent) {
+        UChat.chat("$failPrefix Mod API request failed: ${event.reason}")
+    }*/
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun onPacket(event: MainReceivePacketEvent<*, *>) {
@@ -580,6 +602,8 @@ class Skytils {
             val brand = event.packet.bufferData.readStringFromBuffer(Short.MAX_VALUE.toInt())
             if (brand.lowercase().contains("hypixel")) {
                 Utils.isOnHypixel = true
+                onJoinHypixel(event.handler as NetHandlerPlayClient)
+
             }
         }
         if (Utils.inDungeons || !Utils.isOnHypixel || event.packet !is S38PacketPlayerListItem ||
@@ -595,6 +619,12 @@ class Skytils {
                     ScoreCalculation.updateText(ScoreCalculation.totalScore.get())
                 return@forEach
             }
+        }
+    }
+
+    fun onJoinHypixel(handler: NetHandlerPlayClient) = IO.launch {
+        ServerboundPingPacket().getResponse<ClientboundPingPacket>(handler).let { packet ->
+            println("Hypixel Pong: ${packet.response}, version ${packet.version}")
         }
     }
 
