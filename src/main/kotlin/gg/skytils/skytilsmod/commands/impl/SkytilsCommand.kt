@@ -54,10 +54,14 @@ import gg.skytils.skytilsmod.gui.updater.UpdateGui
 import gg.skytils.skytilsmod.gui.waypoints.WaypointsGui
 import gg.skytils.skytilsmod.listeners.ServerPayloadInterceptor.getResponse
 import gg.skytils.skytilsmod.localapi.LocalAPI
+import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorHypixelPacketRegistry
 import gg.skytils.skytilsmod.utils.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import net.hypixel.modapi.HypixelModAPI
+import net.hypixel.modapi.packet.ClientboundHypixelPacket
+import net.hypixel.modapi.packet.impl.serverbound.ServerboundVersionedPacket
 import net.hypixel.modapi.packet.HypixelPacket
 import net.hypixel.modapi.packet.impl.serverbound.ServerboundLocationPacket
 import net.hypixel.modapi.packet.impl.serverbound.ServerboundPartyInfoPacket
@@ -383,22 +387,27 @@ object SkytilsCommand : BaseCommand("skytils", listOf("st")) {
             }
 
             "hypixelpacket" -> {
-                val packet = when (args.getOrNull(1)) {
-                    "ping" -> ServerboundPingPacket()
-                    "location" -> ServerboundLocationPacket()
-                    "party_info" -> ServerboundPartyInfoPacket()
-                    "player_info" -> ServerboundPlayerInfoPacket()
-                    else -> return UChat.chat("$failPrefix §cPacket not found!")
-                }
+                val registry = HypixelModAPI.getInstance().registry
+                val id = args.getOrNull(1) ?: return UChat.chat("$failPrefix §cInput a packet type!")
+                if (id == "list") {
+                    UChat.chat("$successPrefix §eAvailable types: ${registry.identifiers.joinToString(", ")}")
+                } else if (!registry.isRegistered(id)) {
+                    UChat.chat("$failPrefix §cPacket not found!")
+                } else {
+                    registry as AccessorHypixelPacketRegistry
+                    val packetClass = registry.classToIdentifier.entries.find { it.value == id && ServerboundVersionedPacket::class.java.isAssignableFrom(it.key) }
+                        ?: return UChat.chat("$failPrefix §cPacket not found!")
+                    val packet = packetClass.key.newInstance() as ServerboundVersionedPacket
+                    UChat.chat("$successPrefix §aPacket created: $packet")
+                    Skytils.IO.launch {
+                        runCatching {
+                            packet.getResponse<ClientboundHypixelPacket>()
+                        }.onFailure {
+                            UChat.chat("$failPrefix §cFailed to get packet response: ${it.message}")
+                        }.onSuccess { response ->
+                            UChat.chat("$successPrefix §aPacket response: $response")
+                        }
 
-                UChat.chat("$successPrefix §aPacket created: $packet")
-                Skytils.IO.launch {
-                    runCatching {
-                        packet.getResponse<HypixelPacket>(mc.netHandler)
-                    }.onFailure {
-                        UChat.chat("$failPrefix §cFailed to get packet response: ${it.message}")
-                    }.onSuccess { response ->
-                        UChat.chat("$successPrefix §aPacket response: $response")
                     }
                 }
             }

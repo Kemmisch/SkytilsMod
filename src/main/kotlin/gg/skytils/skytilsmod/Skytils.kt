@@ -25,7 +25,7 @@ import gg.skytils.skytilsmod.commands.impl.*
 import gg.skytils.skytilsmod.commands.stats.impl.CataCommand
 import gg.skytils.skytilsmod.commands.stats.impl.SlayerCommand
 import gg.skytils.skytilsmod.core.*
-import gg.skytils.skytilsmod.tweaker.DependencyLoader
+import gg.skytils.skytilsmod.events.impl.HypixelPacketEvent
 import gg.skytils.skytilsmod.events.impl.MainReceivePacketEvent
 import gg.skytils.skytilsmod.events.impl.PacketEvent
 import gg.skytils.skytilsmod.features.impl.crimson.KuudraChestProfit
@@ -46,6 +46,7 @@ import gg.skytils.skytilsmod.features.impl.farming.TreasureHunter
 import gg.skytils.skytilsmod.features.impl.farming.VisitorHelper
 import gg.skytils.skytilsmod.features.impl.funny.Funny
 import gg.skytils.skytilsmod.features.impl.handlers.*
+import gg.skytils.skytilsmod.features.impl.mining.CHWaypoints
 import gg.skytils.skytilsmod.features.impl.mining.MiningFeatures
 import gg.skytils.skytilsmod.features.impl.mining.StupidTreasureChestOpeningThing
 import gg.skytils.skytilsmod.features.impl.misc.*
@@ -71,9 +72,11 @@ import gg.skytils.skytilsmod.mixins.hooks.util.MouseHelperHook
 import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorCommandHandler
 import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorGuiStreamUnavailable
 import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorSettingsGui
+import gg.skytils.skytilsmod.tweaker.DependencyLoader
 import gg.skytils.skytilsmod.utils.*
 import gg.skytils.skytilsmod.utils.graphics.ScreenRenderer
 import gg.skytils.skytilsmod.utils.graphics.colors.CustomColor
+import gg.skytils.skytilsws.client.WSClient
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
@@ -217,6 +220,23 @@ class Skytils {
             }
         }
 
+        val trustManager by lazy {
+            val backingManager = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
+                init(null as KeyStore?)
+            }.trustManagers.first { it is X509TrustManager } as X509TrustManager
+
+            val ourManager = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
+                Skytils::class.java.getResourceAsStream("/skytilscacerts.jks").use {
+                    val ourKs = KeyStore.getInstance(KeyStore.getDefaultType()).apply {
+                        load(it, "skytilsontop".toCharArray())
+                    }
+                    init(ourKs)
+                }
+            }.trustManagers.first { it is X509TrustManager } as X509TrustManager
+
+            UnionX509TrustManager(backingManager, ourManager)
+        }
+
         val client = HttpClient(CIO) {
             install(ContentEncoding) {
                 customEncoder(BrotliEncoder, 1.0F)
@@ -246,20 +266,7 @@ class Skytils {
                     socketTimeout = 10000
                 }
                 https {
-                    val backingManager = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
-                        init(null as KeyStore?)
-                    }.trustManagers.first { it is X509TrustManager } as X509TrustManager
-
-                    val ourManager = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
-                        Skytils::class.java.getResourceAsStream("/skytilscacerts.jks").use {
-                            val ourKs = KeyStore.getInstance(KeyStore.getDefaultType()).apply {
-                                load(it, "skytilsontop".toCharArray())
-                            }
-                            init(ourKs)
-                        }
-                    }.trustManagers.first { it is X509TrustManager } as X509TrustManager
-
-                    trustManager = UnionX509TrustManager(backingManager, ourManager)
+                    trustManager = Skytils.trustManager
                 }
             }
         }
@@ -316,6 +323,7 @@ class Skytils {
             BoulderSolver,
             ChatTabs,
             ChangeAllToSameColorSolver,
+            CHWaypoints,
             DungeonChestProfit,
             ClickInOrderSolver,
             NamespacedCommands,
@@ -542,6 +550,7 @@ class Skytils {
 
     @SubscribeEvent
     fun onConnect(event: FMLNetworkEvent.ClientConnectedToServerEvent) {
+        Utils.lastNHPC = event.handler as? NetHandlerPlayClient
         Utils.isOnHypixel = mc.runCatching {
             !event.isLocal && (thePlayer?.clientBrand?.lowercase()?.contains("hypixel")
                 ?: currentServerData?.serverIP?.lowercase()?.contains("hypixel") ?: false)
@@ -554,6 +563,15 @@ class Skytils {
         IO.launch {
             TrophyFish.loadFromApi()
         }
+
+        IO.launch {
+            WSClient.openConnection()
+        }
+    }
+
+    @SubscribeEvent
+    fun onHypixelPacketFail(event: HypixelPacketEvent.FailedEvent) {
+        UChat.chat("$failPrefix Mod API request failed: ${event.reason}")
     }
 
     /*@SubscribeEvent
@@ -585,6 +603,7 @@ class Skytils {
             if (brand.lowercase().contains("hypixel")) {
                 Utils.isOnHypixel = true
                 onJoinHypixel(event.handler as NetHandlerPlayClient)
+
             }
         }
         if (Utils.inDungeons || !Utils.isOnHypixel || event.packet !is S38PacketPlayerListItem ||
@@ -611,9 +630,14 @@ class Skytils {
 
     @SubscribeEvent
     fun onDisconnect(event: FMLNetworkEvent.ClientDisconnectionFromServerEvent) {
+        Utils.lastNHPC = null
         Utils.isOnHypixel = false
         Utils.skyblock = false
         Utils.dungeons = false
+
+        IO.launch {
+            WSClient.closeConnection()
+        }
     }
 
     @SubscribeEvent
