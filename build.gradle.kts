@@ -147,7 +147,7 @@ dependencies {
 
     shadowMe(project(":events"))
     shadowMe(project(":hypixel-api:types"))
-
+    shadowMe("net.hypixel:mod-api:0.2.1")
 
     shadowMe("org.bouncycastle:bcpg-jdk18on:1.78.1") {
         exclude(module = "bcprov-jdk18on")

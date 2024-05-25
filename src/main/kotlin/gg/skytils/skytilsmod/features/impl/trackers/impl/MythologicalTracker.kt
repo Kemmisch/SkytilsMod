@@ -169,7 +169,7 @@ object MythologicalTracker : Tracker("mythological") {
                 val time = extraAttr.getLong("timestamp")
                 if (System.currentTimeMillis() - time > 6000) return
                 if (Skytils.config.broadcastMythCreatureDrop) {
-                    val text = "§6§lRARE DROP! ${drop.rarity.baseColor}${drop.itemName} §b(Skytils User Luck!)"
+                    val text = "§6§lRARE DROP! ${drop.rarity.baseColor}${drop.itemName} §b(songreaver luck!)"
                     if (Skytils.config.autoCopyRNGDrops) GuiScreen.setClipboardString(text.stripControlCodes())
                     UTextComponent(text)
                         .setClick(MCClickEventAction.RUN_COMMAND, "/skytilscopy ${text.stripControlCodes()}")
