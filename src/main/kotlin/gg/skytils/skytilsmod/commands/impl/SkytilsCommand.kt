@@ -62,11 +62,6 @@ import kotlinx.coroutines.launch
 import net.hypixel.modapi.HypixelModAPI
 import net.hypixel.modapi.packet.ClientboundHypixelPacket
 import net.hypixel.modapi.packet.impl.serverbound.ServerboundVersionedPacket
-import net.hypixel.modapi.packet.HypixelPacket
-import net.hypixel.modapi.packet.impl.serverbound.ServerboundLocationPacket
-import net.hypixel.modapi.packet.impl.serverbound.ServerboundPartyInfoPacket
-import net.hypixel.modapi.packet.impl.serverbound.ServerboundPingPacket
-import net.hypixel.modapi.packet.impl.serverbound.ServerboundPlayerInfoPacket
 import net.minecraft.client.entity.EntityPlayerSP
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.command.WrongUsageException

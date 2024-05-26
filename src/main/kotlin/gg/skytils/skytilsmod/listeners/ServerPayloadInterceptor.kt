@@ -39,20 +39,6 @@ import net.hypixel.modapi.packet.impl.clientbound.ClientboundHelloPacket
 import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket
 import net.hypixel.modapi.packet.impl.serverbound.ServerboundVersionedPacket
 import net.hypixel.modapi.serializer.PacketSerializer
-import gg.skytils.skytilsmod.Skytils.Companion.IO
-import gg.skytils.skytilsmod.events.impl.HypixelPacketEvent
-import gg.skytils.skytilsmod.events.impl.PacketEvent
-import io.netty.buffer.Unpooled
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
-import net.hypixel.modapi.error.ErrorReason
-import net.hypixel.modapi.packet.HypixelPacket
-import net.hypixel.modapi.packet.HypixelPacketType
-import net.hypixel.modapi.serializer.PacketSerializer
-import net.minecraft.client.network.NetHandlerPlayClient
 import net.minecraft.network.PacketBuffer
 import net.minecraft.network.play.client.C17PacketCustomPayload
 import net.minecraft.network.play.server.S3FPacketCustomPayload
@@ -62,7 +48,6 @@ import kotlin.time.Duration.Companion.minutes
 
 object ServerPayloadInterceptor {
     private val receivedPackets = MutableSharedFlow<ClientboundHypixelPacket>()
-
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun onReceivePacket(event: PacketEvent.ReceiveEvent) {
@@ -90,7 +75,6 @@ object ServerPayloadInterceptor {
                         it.printStackTrace()
                     }
                     data.release()
-
                 }
             }
         }
@@ -148,5 +132,4 @@ object ServerPayloadInterceptor {
     }
 
     private fun getNetClientHandler() = mc.netHandler ?: Utils.lastNHPC
-
 }

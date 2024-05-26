@@ -59,6 +59,7 @@ import gg.skytils.skytilsmod.features.impl.spidersden.SpidersDenFeatures
 import gg.skytils.skytilsmod.features.impl.trackers.impl.DupeTracker
 import gg.skytils.skytilsmod.features.impl.trackers.impl.MayorJerryTracker
 import gg.skytils.skytilsmod.features.impl.trackers.impl.MythologicalTracker
+import gg.skytils.skytilsmod.features.impl.trackers.impl.TrapperTracker
 import gg.skytils.skytilsmod.gui.OptionsGui
 import gg.skytils.skytilsmod.gui.ReopenableGUI
 import gg.skytils.skytilsmod.listeners.ChatListener
@@ -361,6 +362,7 @@ class Skytils {
             MinionFeatures,
             MiscFeatures,
             MythologicalTracker,
+            TrapperTracker,
             PartyAddons,
             PartyFeatures,
             PartyFinderStats,
@@ -556,10 +558,6 @@ class Skytils {
                 ?: currentServerData?.serverIP?.lowercase()?.contains("hypixel") ?: false)
         }.onFailure { it.printStackTrace() }.getOrDefault(false)
 
-        if (Utils.isOnHypixel) {
-            onJoinHypixel(event.handler as NetHandlerPlayClient)
-        }
-
         IO.launch {
             TrophyFish.loadFromApi()
         }
@@ -573,11 +571,6 @@ class Skytils {
     fun onHypixelPacketFail(event: HypixelPacketEvent.FailedEvent) {
         UChat.chat("$failPrefix Mod API request failed: ${event.reason}")
     }
-
-    /*@SubscribeEvent
-    fun onHypixelPacketFail(event: HypixelPacketEvent.FailedEvent) {
-        UChat.chat("$failPrefix Mod API request failed: ${event.reason}")
-    }*/
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun onPacket(event: MainReceivePacketEvent<*, *>) {
@@ -602,8 +595,6 @@ class Skytils {
             val brand = event.packet.bufferData.readStringFromBuffer(Short.MAX_VALUE.toInt())
             if (brand.lowercase().contains("hypixel")) {
                 Utils.isOnHypixel = true
-                onJoinHypixel(event.handler as NetHandlerPlayClient)
-
             }
         }
         if (Utils.inDungeons || !Utils.isOnHypixel || event.packet !is S38PacketPlayerListItem ||
@@ -619,12 +610,6 @@ class Skytils {
                     ScoreCalculation.updateText(ScoreCalculation.totalScore.get())
                 return@forEach
             }
-        }
-    }
-
-    fun onJoinHypixel(handler: NetHandlerPlayClient) = IO.launch {
-        ServerboundPingPacket().getResponse<ClientboundPingPacket>(handler).let { packet ->
-            println("Hypixel Pong: ${packet.response}, version ${packet.version}")
         }
     }
 

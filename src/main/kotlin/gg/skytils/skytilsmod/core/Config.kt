@@ -1816,6 +1816,16 @@ object Config : Vigilant(
     var trapperPing = false
 
     @Property(
+        type = PropertyType.SWITCH, name = "Trapper Mob Info",
+        description = "Shows info about ctrapper mobs",
+        category = "Farming", subcategory = "Quality of Life",
+        i18nName = "skytils.config.farming.quality_of_life.trapper_info",
+        i18nCategory = "skytils.config.farming",
+        i18nSubcategory = "skytils.config.farming.quality_of_life"
+    )
+    var trapperInfo = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Talbot's Theodolite Helper",
         description = "Shows Y coordinate bounds based on Talbot's Theodolite output",
         category = "Farming", subcategory = "Quality of Life",
@@ -1824,6 +1834,16 @@ object Config : Vigilant(
         i18nSubcategory = "skytils.config.farming.quality_of_life"
     )
     var talbotsTheodoliteHelper = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Trapper Solver",
+        description = "Shows Possible Locations for trapper mob based on theodolite info, and finds mobs.",
+        category = "Farming", subcategory = "Quality of Life",
+        i18nName = "skytils.config.farming.quality_of_life.trapper_solver",
+        i18nCategory = "skytils.config.farming",
+        i18nSubcategory = "skytils.config.farming.quality_of_life"
+    )
+    var trapperSolver = false
 
     @Property(
         type = PropertyType.SWITCH, name = "Hide Non-Nametag Armor Stands on Kuudra",
@@ -4398,6 +4418,8 @@ object Config : Vigilant(
         addDependency("showEtherwarpTeleportPosColor", "showEtherwarpTeleportPos")
 
         addDependency("samScytheColor", "showSamScytheBlocks")
+
+        addDependency("trapperSolver", "talbotsTheodoliteHelper")
 
         addDependency("itemRarityOpacity", "showItemRarity")
         addDependency("itemRarityShape", "showItemRarity")

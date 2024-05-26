@@ -18,6 +18,7 @@
 package gg.skytils.skytilsmod.features.impl.farming
 
 import gg.essential.universal.UChat
+import gg.essential.universal.UMatrixStack
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.failPrefix
 import gg.skytils.skytilsmod.Skytils.Companion.mc
@@ -28,23 +29,35 @@ import gg.skytils.skytilsmod.core.SoundQueue
 import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.events.impl.PacketEvent.ReceiveEvent
 import gg.skytils.skytilsmod.features.impl.handlers.MayorInfo
-import gg.skytils.skytilsmod.utils.SBInfo
-import gg.skytils.skytilsmod.utils.Utils
-import gg.skytils.skytilsmod.utils.stripControlCodes
+import gg.skytils.skytilsmod.utils.*
 import net.minecraft.client.gui.GuiChat
+import net.minecraft.entity.EntityLivingBase
+import net.minecraft.entity.item.EntityArmorStand
 import net.minecraft.network.play.server.S45PacketTitle
 import net.minecraft.util.ChatComponentText
+import net.minecraft.util.Vec3
 import net.minecraftforge.client.event.ClientChatReceivedEvent
 import net.minecraftforge.client.event.GuiScreenEvent
+import net.minecraftforge.client.event.RenderLivingEvent
+import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
 import org.lwjgl.input.Mouse
+import java.awt.Color
 
 object FarmingFeatures {
     val hungerHikerItems = LinkedHashMap<String, String>()
     var trapperCooldownExpire = -1L
     var animalFound = false
+    var animalType: String? = null
+    var animalRarity: String? = null
+    var animalLocation: String? = null
+    var timeAlive = -1L
+    var mobCoords: Vec3? = null
+    var theodoliteUsed = false
+    private val mobRegex = Regex("§8\\[§7Lv\\d\\d?§8] §c(§.)?(?<rarity>\\w{1,13}) (?<type>\\w{1,10})§r §.[\\d,]+§f/§.[\\d,]+§.❤")
+    private val trevorRegex = Regex("§e\\[NPC] Trevor§f: §rYou can find your §.§l(?<rarity>TRACKABLE|UNTRACKABLE|UNDETECTED|ENDANGERED|ELUSIVE) §fanimal near the §.(?<location>(Desert Settlement|Oasis|Desert Mountain|Overgrown Mushroom Cave|Glowing Mushroom Cave|Mushroom Gorge))§f.§r")
     var acceptTrapperCommand = ""
 
     private val targetHeightRegex =
@@ -52,9 +65,9 @@ object FarmingFeatures {
     var targetMinY = 0
     var targetMaxY = 0
 
-    @SubscribeEvent
+    @SubscribeEvent(receiveCanceled = true)
     fun onChat(event: ClientChatReceivedEvent) {
-        if (SBInfo.mode != "farming_1" || event.type == 2.toByte()) return
+        if (!Utils.inSkyblock || SBInfo.mode != "farming_1" || event.type == 2.toByte()) return
 
         val formatted = event.message.formattedText
         val unformatted = event.message.unformattedText.stripControlCodes()
@@ -67,30 +80,68 @@ object FarmingFeatures {
                 UChat.chat("$prefix §bOpen chat then click anywhere on screen to accept the task.")
             }
         }
-        if (Skytils.config.trapperPing) {
-            if (unformatted.startsWith("[NPC] Trevor The Trapper: You can find your")) {
-                trapperCooldownExpire = System.currentTimeMillis() +
-                        if (MayorInfo.currentMayor == "Finnegan") 30000 else 60000
+
+
+        if (Skytils.config.talbotsTheodoliteHelper || Skytils.config.trapperPing || Skytils.config.trapperSolver) {
+
+            val mobMatch = trevorRegex.find(formatted)
+            if (mobMatch != null) {
+
+                timeAlive = System.currentTimeMillis()
                 animalFound = false
-            } else if (unformatted.startsWith("Return to the Trapper soon to get a new animal to hunt!")) {
-                if (trapperCooldownExpire > 0 && System.currentTimeMillis() > trapperCooldownExpire) {
+
+
+                if (Skytils.config.trapperPing) {
+                    trapperCooldownExpire = System.currentTimeMillis() + if (MayorInfo.currentMayor == "Finnegan") 30000 else 60000
+                }
+                if (Skytils.config.talbotsTheodoliteHelper) {
+                    targetMinY = -1
+                    targetMaxY = -1
+                }
+                if (Skytils.config.trapperSolver || Skytils.config.trapperInfo) {
+                    animalRarity = mobMatch.groups["rarity"]!!.value.toTitleCase()
+                    animalLocation = mobMatch.groups["location"]!!.value
+
+
+
+                }
+            }
+
+            if (Skytils.config.trapperSolver || Skytils.config.trapperInfo) {
+                if (unformatted.startsWith("§r§cThe animal sent you flying!")) {
+                    animalType = "Sheep"
+                } else if (unformatted.startsWith("§r§cThe pig made a stench, you feel nauseous!")) {
+                    animalType = "Pig"
+                } else if (unformatted.startsWith("§r§cThe animal went invisible because you got too close!")) {
+                    animalType = "Cow"
+                }
+            }
+
+            if (unformatted.startsWith("You are at the exact height!") && Skytils.config.talbotsTheodoliteHelper) {
+                targetMinY = mc.thePlayer.posY.toInt()
+                targetMaxY = mc.thePlayer.posY.toInt()
+                event.isCanceled = true
+                UChat.chat("You are at the exact height! ($targetMaxY)")
+            }
+
+            if (unformatted.startsWith("Return to the Trapper soon to get a new animal to hunt!")) {
+                if (trapperCooldownExpire > 0 && System.currentTimeMillis() > trapperCooldownExpire && Skytils.config.trapperPing) {
                     Utils.playLoudSound("note.pling", 1.0)
                     UChat.chat("$prefix §bTrapper cooldown has already expired!")
                     trapperCooldownExpire = -1
                 }
                 animalFound = true
+                animalLocation = null
+                animalRarity = null
+                animalType = null
+                mobCoords = null
+                theodoliteUsed = false
             }
-        }
-        if (Skytils.config.talbotsTheodoliteHelper) {
-            if (unformatted.startsWith("[NPC] Trevor The Trapper: You can find your")) {
-                targetMinY = -1
-                targetMaxY = -1
-            } else if (unformatted.startsWith("You are at the exact height!")) {
-                targetMinY = mc.thePlayer.posY.toInt()
-                targetMaxY = mc.thePlayer.posY.toInt()
-            } else {
+
+            if (Skytils.config.talbotsTheodoliteHelper) {
                 val match = targetHeightRegex.find(unformatted)
                 if (match != null) {
+                    theodoliteUsed = true
                     val blocks = match.groups["blocks"]!!.value.toInt()
                     val below = match.groups["type"]!!.value == "below"
                     val y = mc.thePlayer.posY.toInt() + blocks * if (below) -1 else 1
@@ -105,10 +156,9 @@ object FarmingFeatures {
                         targetMinY = minY
                         targetMaxY = maxY
                     }
-
+                    event.isCanceled = true
                     UChat.chat("§r§aThe target is at §6Y §r§e$targetMinY${if (targetMinY != targetMaxY) "-$targetMaxY" else ""} §7($blocks blocks ${match.groups["type"]!!.value}, ${match.groups["angle"]!!.value} angle)")
 
-                    event.isCanceled = true
                 }
             }
         }
@@ -173,6 +223,11 @@ object FarmingFeatures {
     @SubscribeEvent
     fun onWorldChange(event: WorldEvent.Unload) {
         trapperCooldownExpire = -1
+        animalType = null
+        animalFound = false
+        animalRarity = null
+        animalLocation = null
+        timeAlive = -1L
     }
 
     @SubscribeEvent
@@ -185,4 +240,35 @@ object FarmingFeatures {
             }
         }
     }
+
+    @SubscribeEvent
+    fun onRenderLivingPre(event: RenderLivingEvent.Pre<EntityLivingBase>) {
+        if (animalFound || mc.renderManager.isDebugBoundingBox || !Utils.inSkyblock || SBInfo.mode != "farming_1" || !Skytils.config.trapperSolver || !event.entity.hasCustomName() || event.entity !is EntityArmorStand) return
+        val entity = event.entity as EntityArmorStand
+        val mobMatch = mobRegex.find(entity.customNameTag) ?: return
+        if ((mobMatch.groups.get("rarity")?.value
+                ?: return) != animalRarity || mobMatch.groups.get("type")?.value != (animalType
+                ?: mobMatch.groups.get("type")?.value) || !entity.customNameTag.containsAny("/","\\")
+        ) return
+        animalType = mobMatch.groups.get("type")?.value ?: return
+        val (x, y, z) = RenderUtil.fixRenderPos(event.x, event.y, event.z)
+        mobCoords = Vec3(x,y,z)
+        RenderUtil.draw3DLine(
+            mobCoords ?: return,
+            mc.thePlayer.getPositionEyes(RenderUtil.getPartialTicks()),
+            2,
+            Color.cyan,
+            RenderUtil.getPartialTicks(),
+            UMatrixStack()
+        )
+    }
+
+    @SubscribeEvent
+    fun onWorldRender(event: RenderWorldLastEvent) {
+        if (!theodoliteUsed || mobCoords == null || animalFound || !Utils.inSkyblock || SBInfo.mode != "farming_1" || !Skytils.config.trapperSolver || mc.theWorld == null || mc.thePlayer == null) return
+
+    }
+
+
+
 }

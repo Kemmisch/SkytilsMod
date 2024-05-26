@@ -20,8 +20,6 @@ package gg.skytils.skytilsmod.events.impl
 import gg.skytils.skytilsmod.events.SkytilsEvent
 import net.hypixel.modapi.error.ErrorReason
 import net.hypixel.modapi.packet.ClientboundHypixelPacket
-import net.hypixel.modapi.packet.HypixelPacket
-import net.hypixel.modapi.packet.HypixelPacketType
 import net.minecraftforge.fml.common.eventhandler.Cancelable
 
 @Cancelable

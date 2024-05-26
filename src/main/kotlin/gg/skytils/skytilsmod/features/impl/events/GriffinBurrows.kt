@@ -218,8 +218,8 @@ object GriffinBurrows {
         if (Skytils.config.drawInquisitorCoords && coordsRegex.matches(event.message.formattedText)) {
             val coordsPartyMessage = coordsRegex.find(event.message.formattedText)
             val senderName = coordsPartyMessage?.groups?.get("name")?.value?.trim() ?: return
-            val senderRank = coordsPartyMessage?.groups?.get("rank")?.value?.trim() ?: return
-            lastInq = Inquisitor(Vec3(coordsPartyMessage?.groups?.get("x")?.value?.trim()?.toDoubleOrNull() ?: return,coordsPartyMessage?.groups?.get("y")?.value?.trim()?.toDoubleOrNull() ?: return,coordsPartyMessage?.groups?.get("z")?.value?.trim()?.toDoubleOrNull() ?: return),System.currentTimeMillis(),senderName)
+            val senderRank = coordsPartyMessage.groups.get("rank")!!.value?.trim() ?: return
+            lastInq = Inquisitor(Vec3(coordsPartyMessage.groups?.get("x")?.value?.trim()?.toDoubleOrNull() ?: return,coordsPartyMessage?.groups?.get("y")?.value?.trim()?.toDoubleOrNull() ?: return,coordsPartyMessage?.groups?.get("z")?.value?.trim()?.toDoubleOrNull() ?: return),System.currentTimeMillis(),senderName)
             UChat.chat("§6Inquisitor §ffound by $senderRank $senderName§r")
             GuiManager.createTitle("§6[§r§b§kr§r§6]§r §3$senderName's§r §6Inquisitor [§r§b§kr§r§6]§r",100)
         }
