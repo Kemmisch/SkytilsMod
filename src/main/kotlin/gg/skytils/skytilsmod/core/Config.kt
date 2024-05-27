@@ -1846,6 +1846,26 @@ object Config : Vigilant(
     var trapperSolver = false
 
     @Property(
+        type = PropertyType.COLOR, name = "Trapper Solver Color",
+        description = "Color used to draw trapper solver lines",
+        category = "Farming", subcategory = "Quality of Life",
+        i18nName = "skytils.config.farming.quality_of_life.trapper_solver_color",
+        i18nCategory = "skytils.config.farming",
+        i18nSubcategory = "skytils.config.farming.quality_of_life"
+    )
+    var trapperSolverColor = Color.CYAN
+
+    @Property(
+        type = PropertyType.TEXT, name = "Trapper solver passes",
+        description = "Amount of passes used to display theodolite - will cause lag if turned up beyond base value",
+        category = "Farming", subcategory = "Quality of Life",
+        i18nName = "skytils.config.farming.quality_of_life.trapper_solver_passes",
+        i18nCategory = "skytils.config.farming",
+        i18nSubcategory = "skytils.config.farming.quality_of_life"
+    )
+    var trapperSolverPasses = "4"
+
+    @Property(
         type = PropertyType.SWITCH, name = "Hide Non-Nametag Armor Stands on Kuudra",
         description = "Hides non nametag armor stands on Kuudra Island.",
         category = "Kuudra", subcategory = "Performance",
@@ -4420,6 +4440,8 @@ object Config : Vigilant(
         addDependency("samScytheColor", "showSamScytheBlocks")
 
         addDependency("trapperSolver", "talbotsTheodoliteHelper")
+        addDependency("trapperSolverColor","trapperSolver")
+        addDependency("trapperSolverPasses","trapperSolver")
 
         addDependency("itemRarityOpacity", "showItemRarity")
         addDependency("itemRarityShape", "showItemRarity")

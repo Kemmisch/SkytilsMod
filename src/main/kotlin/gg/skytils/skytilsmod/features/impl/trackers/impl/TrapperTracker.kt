@@ -108,7 +108,7 @@ object TrapperTracker : Tracker("trapper") {
                 val alignment =
                     if (leftAlign) SmartFontRenderer.TextAlignment.LEFT_RIGHT else SmartFontRenderer.TextAlignment.RIGHT_LEFT
                 ScreenRenderer.fontRenderer.drawString(
-                    "§f${TrapperMob.entries[0].foundTimes}/§a${TrapperMob.entries[1].foundTimes}/§9${TrapperMob.entries[2].foundTimes}/§5${TrapperMob.entries[3].foundTimes}/§6${TrapperMob.entries[4].foundTimes}",
+                    "§f${TrapperMob.entries[0].foundTimes}§7/§a${TrapperMob.entries[1].foundTimes}§7/§9${TrapperMob.entries[2].foundTimes}§7/§5${TrapperMob.entries[3].foundTimes}§7/§6${TrapperMob.entries[4].foundTimes}",
                     if (leftAlign) 0f else width.toFloat(),
                     0f,
                     CommonColors.YELLOW,
@@ -135,9 +135,9 @@ object TrapperTracker : Tracker("trapper") {
         }
 
         override val height: Int
-            get() = ScreenRenderer.fontRenderer.FONT_HEIGHT * 17
+            get() = ScreenRenderer.fontRenderer.FONT_HEIGHT
         override val width: Int
-            get() = ScreenRenderer.fontRenderer.getStringWidth("§f500/§f240/§f90/§f40/§f10")
+            get() = ScreenRenderer.fontRenderer.getStringWidth("§f500§7/§f240§7/§f90§7/§f40§7/§f10")
 
         override val toggled: Boolean
             get() = Skytils.config.trapperInfo

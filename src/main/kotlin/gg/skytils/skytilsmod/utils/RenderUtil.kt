@@ -594,6 +594,13 @@ object RenderUtil {
         }
     }
 
+    fun drawQuad(c1: Vec3, c2: Vec3, c3: Vec3, c4: Vec3, width: Int, color: Color, partialTicks: Float, matrixStack: UMatrixStack, alphaMultiplier: Float = 1f) {
+        draw3DLine(c1,c2,width,color,partialTicks,matrixStack,alphaMultiplier)
+        draw3DLine(c2,c3,width,color,partialTicks,matrixStack,alphaMultiplier)
+        draw3DLine(c3,c4,width,color,partialTicks,matrixStack,alphaMultiplier)
+        draw3DLine(c4,c1,width,color,partialTicks,matrixStack,alphaMultiplier)
+    }
+
     /**
      * Taken from SkyblockAddons under MIT License
      * Modified

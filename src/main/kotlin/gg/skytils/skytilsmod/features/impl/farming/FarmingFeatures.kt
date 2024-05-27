@@ -44,7 +44,9 @@ import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
 import org.lwjgl.input.Mouse
+import org.lwjgl.util.vector.Quaternion
 import java.awt.Color
+import kotlin.math.*
 
 object FarmingFeatures {
     val hungerHikerItems = LinkedHashMap<String, String>()
@@ -64,6 +66,16 @@ object FarmingFeatures {
         Regex("^The target is around (?<blocks>\\d+) blocks (?<type>above|below), at a (?<angle>\\d+) degrees angle!$")
     var targetMinY = 0
     var targetMaxY = 0
+
+    var c = mutableListOf<Quad>()
+
+    data class Quad(val c1: Vec3, val c2: Vec3, val c3: Vec3, val c4: Vec3, val width: Int, var color: Color, var matrixStack: UMatrixStack, var alphaMultiplier: Float = 1F)
+
+    fun rotatex2d(theta: Float, px: Double, pz: Double, ox: Double, oz: Double): Double { return cos(theta)*(px-ox) - sin(theta)*(pz-oz) + ox }
+
+    fun rotatez2d(theta: Float, px: Double, pz: Double, ox: Double, oz: Double): Double { return sin(theta)*(px-ox) - cos(theta)*(pz-oz) + oz }
+
+
 
     @SubscribeEvent(receiveCanceled = true)
     fun onChat(event: ClientChatReceivedEvent) {
@@ -136,29 +148,65 @@ object FarmingFeatures {
                 animalType = null
                 mobCoords = null
                 theodoliteUsed = false
+                c.clear()
             }
 
             if (Skytils.config.talbotsTheodoliteHelper) {
                 val match = targetHeightRegex.find(unformatted)
                 if (match != null) {
-                    theodoliteUsed = true
+                    val angle = match.groups["angle"]!!.value.toInt()
                     val blocks = match.groups["blocks"]!!.value.toInt()
                     val below = match.groups["type"]!!.value == "below"
-                    val y = mc.thePlayer.posY.toInt() + blocks * if (below) -1 else 1
-                    val filler = if (blocks == 5) 2 else 0
-                    val minY = y - 2 - if (below) 0 else filler
-                    val maxY = y + 2 + if (below) filler else 0
-
-                    if (minY <= targetMaxY && maxY >= targetMinY) {
-                        targetMinY = minY.coerceAtLeast(targetMinY)
-                        targetMaxY = maxY.coerceAtMost(targetMaxY)
-                    } else {
-                        targetMinY = minY
-                        targetMaxY = maxY
+                    val y = mc.thePlayer.posY
+                    val targetY = y.toInt() + if (below) -blocks else blocks
+                    val minTargetY = targetY - 2.5
+                    val maxTargetY = targetY + 2.5
+                    val minY = blocks - 2.5
+                    val maxY = blocks + 2.5
+                    var passes = try {
+                        Skytils.config.trapperSolverPasses.toInt()
+                    } catch (e: NumberFormatException) {
+                        4
                     }
-                    event.isCanceled = true
-                    UChat.chat("§r§aThe target is at §6Y §r§e$targetMinY${if (targetMinY != targetMaxY) "-$targetMaxY" else ""} §7($blocks blocks ${match.groups["type"]!!.value}, ${match.groups["angle"]!!.value} angle)")
+                    if (0 >= passes) passes = 4
 
+
+                    event.isCanceled = true
+                    UChat.chat("§r§aThe target is at §6Y §r§e$minTargetY-$maxTargetY §7($blocks blocks ${if (below) "below" else "above"}, $angle angle)")
+                    if (Skytils.config.trapperSolver) {
+                        c.clear()
+
+                        val x = mc.thePlayer.posX
+                        val z = mc.thePlayer.posZ
+
+                        val minAngle = Math.toRadians(if (below) (90 - angle + 2.5) else (90 - angle - 2.5))
+                        val maxAngle = Math.toRadians(if (below) (90 - angle - 2.5) else (90 - angle + 2.5))
+
+                        for (i in 1..passes) {
+
+                            val matrixStack = UMatrixStack()
+                            val R = Math.toRadians((360*i/passes).toDouble()).toFloat()
+                            val x1 = (x + (tan(minAngle) * (maxY)))
+                            val x2 = (x + (tan(maxAngle) * (maxY)))
+                            val x3 = (x + (tan(maxAngle) * (minY)))
+                            val x4 = (x + (tan(minAngle) * (minY)))
+                            //matrixStack.translate(-x,-y,-z)
+                            //matrixStack.multiply(Quaternion(cos(rotation/2).toFloat(),0F,1F,0F))
+                            //matrixStack.rotate(rotation, 0F,1F, 0F,)
+                            //matrixStack.translate(x,y,z)
+                            //UChat.chat("${mc.thePlayer.posY.toInt()},$minY,$maxY,$minAngle,$maxAngle")
+                            val c1 = Vec3(rotatex2d(R,x1,z,x,z), if (below) minTargetY else maxTargetY, rotatez2d(R,x1,z,x,z))
+                            val c2 = Vec3(rotatex2d(R,x2,z,x,z), if (below) minTargetY else maxTargetY, rotatez2d(R,x2,z,x,z))
+                            val c3 = Vec3(rotatex2d(R,x3,z,x,z), if (!below) minTargetY else maxTargetY, rotatez2d(R,x3,z,x,z))
+                            val c4 = Vec3(rotatex2d(R,x4,z,x,z), if (!below) minTargetY else maxTargetY, rotatez2d(R,x4,z,x,z))
+
+                            //UChat.chat("§6${c1.x} ${c1.y} ${c1.z} §f- §6${c2.x} ${c2.y} ${c2.z} §f- §6${c3.x} ${c3.y} ${c3.z} §f- §6${c4.x} ${c4.y} ${c4.z}")
+
+                            c.add(Quad(c1,c2,c3,c4,3,Skytils.config.trapperSolverColor,matrixStack,0.5F))
+                            //UChat.chat("Added")
+                        }
+                        theodoliteUsed = true
+                    }
                 }
             }
         }
@@ -228,6 +276,7 @@ object FarmingFeatures {
         animalRarity = null
         animalLocation = null
         timeAlive = -1L
+        c.clear()
     }
 
     @SubscribeEvent
@@ -257,7 +306,7 @@ object FarmingFeatures {
             mobCoords ?: return,
             mc.thePlayer.getPositionEyes(RenderUtil.getPartialTicks()),
             2,
-            Color.cyan,
+            Skytils.config.trapperSolverColor,
             RenderUtil.getPartialTicks(),
             UMatrixStack()
         )
@@ -265,7 +314,11 @@ object FarmingFeatures {
 
     @SubscribeEvent
     fun onWorldRender(event: RenderWorldLastEvent) {
-        if (!theodoliteUsed || mobCoords == null || animalFound || !Utils.inSkyblock || SBInfo.mode != "farming_1" || !Skytils.config.trapperSolver || mc.theWorld == null || mc.thePlayer == null) return
+        if (c.isEmpty()) return
+        for (quad in c) {
+            RenderUtil.drawQuad(quad.c1,quad.c2,quad.c3,quad.c4,quad.width,quad.color,event.partialTicks,quad.matrixStack,quad.alphaMultiplier)
+        }
+
 
     }
 
