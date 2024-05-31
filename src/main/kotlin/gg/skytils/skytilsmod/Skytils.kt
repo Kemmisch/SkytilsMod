@@ -50,6 +50,7 @@ import gg.skytils.skytilsmod.features.impl.mining.CHWaypoints
 import gg.skytils.skytilsmod.features.impl.mining.MiningFeatures
 import gg.skytils.skytilsmod.features.impl.mining.StupidTreasureChestOpeningThing
 import gg.skytils.skytilsmod.features.impl.misc.*
+import gg.skytils.skytilsmod.features.impl.misc.QuickWarp.keybindQuickWarp
 import gg.skytils.skytilsmod.features.impl.overlays.AuctionPriceOverlay
 import gg.skytils.skytilsmod.features.impl.protectitems.ProtectItems
 import gg.skytils.skytilsmod.features.impl.slayer.SlayerFeatures
@@ -107,6 +108,7 @@ import net.minecraftforge.client.event.GuiOpenEvent
 import net.minecraftforge.client.event.GuiScreenEvent
 import net.minecraftforge.client.event.RenderGameOverlayEvent
 import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.fml.client.registry.ClientRegistry
 import net.minecraftforge.fml.common.Loader
 import net.minecraftforge.fml.common.Mod
 import net.minecraftforge.fml.common.event.FMLInitializationEvent
@@ -291,6 +293,7 @@ class Skytils {
         guiManager = GuiManager
         jarFile = event.sourceFile
         mc.framebuffer.enableStencil()
+        ClientRegistry.registerKeyBinding(gg.skytils.skytilsmod.features.impl.misc.QuickWarp.keybindQuickWarp)
     }
 
     @Mod.EventHandler
@@ -371,6 +374,7 @@ class Skytils {
             PotionEffectTimers,
             PricePaid,
             ProtectItems,
+            QuickWarp,
             QuiverStuff,
             RainTimer,
             RandomStuff,

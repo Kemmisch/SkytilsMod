@@ -18,11 +18,9 @@
 
 package gg.skytils.skytilsmod.features.impl.trackers.impl
 
-import gg.essential.universal.UChat
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.core.structure.GuiElement
 import gg.skytils.skytilsmod.features.impl.trackers.Tracker
-import gg.skytils.skytilsmod.features.impl.trackers.impl.MythologicalTracker.BurrowDrop
 import gg.skytils.skytilsmod.utils.*
 import gg.skytils.skytilsmod.utils.graphics.ScreenRenderer
 import gg.skytils.skytilsmod.utils.graphics.SmartFontRenderer
@@ -34,7 +32,6 @@ import java.io.Reader
 import java.io.Writer
 import kotlinx.serialization.Serializable
 import net.minecraftforge.client.event.ClientChatReceivedEvent
-import net.minecraftforge.fml.common.eventhandler.EventPriority
 
 object TrapperTracker : Tracker("trapper") {
 

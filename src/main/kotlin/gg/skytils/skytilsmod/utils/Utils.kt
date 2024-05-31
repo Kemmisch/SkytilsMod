@@ -316,6 +316,18 @@ fun Entity.getXZDistSq(pos: BlockPos): Double {
     return xDelta * xDelta + zDelta * zDelta
 }
 
+fun Vec3.getXZDistSq(pos: BlockPos): Double {
+    val xDelta = this.x - pos.x
+    val zDelta = this.z - pos.z
+    return xDelta * xDelta + zDelta * zDelta
+}
+
+fun Vec3.getXZDistSq(pos: Vec3): Double {
+    val xDelta = this.x - pos.x
+    val zDelta = this.z - pos.z
+    return xDelta * xDelta + zDelta * zDelta
+}
+
 val Entity.hasMoved
     get() = this.posX != this.prevPosX || this.posY != this.prevPosY || this.posZ != this.prevPosZ
 

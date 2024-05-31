@@ -1595,6 +1595,13 @@ object Config : Vigilant(
     var experimentBurrowEstimation = false
 
     @Property(
+        type = PropertyType.SWITCH, name = "Griffin Burrow Estimation Quick Warp",
+        description = "Provides a suggested warp based on burrow guessed location - you must open the hub warp menu for this to work.",
+        category = "Events", subcategory = "Mythological"
+    )
+    var burrowEstimationQuickWarp = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Broadcast Rare Drop Notifications",
         description = "Sends rare drop notification when you obtain a rare drop from a Mythological Creature.",
         category = "Events", subcategory = "Mythological",
@@ -1648,6 +1655,17 @@ object Config : Vigilant(
         i18nSubcategory = "skytils.config.events.mythological"
     )
     var drawInquisitorCoords = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Inquisitor Quick Warp",
+        description = "Suggests a warp based on received Inquisitor coords.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Tracker", "Inquisitor","Warp"],
+        i18nName = "skytils.config.events.mythological.inquisitor_quick_warp",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var inquisitorQuickWarp = false
 
     @Property(
         type = PropertyType.SWITCH, name = "Mytho Mob Info",
@@ -1766,6 +1784,16 @@ object Config : Vigilant(
     var visitorNotifications = false
 
     @Property(
+        type = PropertyType.SWITCH, name = "Garden Quick Warp",
+        description = "Suggests /warp garden to go back to the start of your farm.",
+        category = "Farming", subcategory = "Garden",
+        i18nName = "skytils.config.farming.garden.garden_quick_warp",
+        i18nCategory = "skytils.config.farming",
+        i18nSubcategory = "skytils.config.farming.garden"
+    )
+    var gardenQuickWarp = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Hide Farming RNG Titles",
         description = "Removes the titles that show up after getting a drop with Pumpkin Dicer / Melon Dicer",
         category = "Farming", subcategory = "Quality of Life",
@@ -1804,6 +1832,16 @@ object Config : Vigilant(
         i18nSubcategory = "skytils.config.farming.quality_of_life"
     )
     var acceptTrapperTask = true
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Trapper Quick Warp",
+        description = "Press a key to warp to a suggested location based on trevor's dialogue",
+        category = "Farming", subcategory = "Quality of Life",
+        i18nName = "skytils.config.farming.quality_of_life.trapper_quick_warp",
+        i18nCategory = "skytils.config.farming",
+        i18nSubcategory = "skytils.config.farming.quality_of_life"
+    )
+    var trapperQuickWarp = false
 
     @Property(
         type = PropertyType.SWITCH, name = "Trapper Cooldown Alarm",
@@ -4515,8 +4553,11 @@ object Config : Vigilant(
             "experimentBurrowEstimation"
         ).forEach { propertyName -> addDependency(propertyName, "showGriffinBurrows") }
 
+        addDependency("burrowEstimationQuickWarp","burrowEstimation")
+
         addDependency("mythoMobHealth", "mythoMobInfo")
         addDependency("lastInqInfo", "mythoMobInfo")
+        addDependency("inquisitorQuickWarp","drawInquisitorCoords")
 
         addDependency("activePetColor", "highlightActivePet")
         addDependency("favoritePetColor", "highlightFavoritePets")

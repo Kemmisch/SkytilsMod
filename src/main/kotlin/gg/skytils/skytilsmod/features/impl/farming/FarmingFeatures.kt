@@ -29,6 +29,7 @@ import gg.skytils.skytilsmod.core.SoundQueue
 import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.events.impl.PacketEvent.ReceiveEvent
 import gg.skytils.skytilsmod.features.impl.handlers.MayorInfo
+import gg.skytils.skytilsmod.features.impl.misc.QuickWarp
 import gg.skytils.skytilsmod.utils.*
 import net.minecraft.client.gui.GuiChat
 import net.minecraft.entity.EntityLivingBase
@@ -44,7 +45,6 @@ import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
 import org.lwjgl.input.Mouse
-import org.lwjgl.util.vector.Quaternion
 import java.awt.Color
 import kotlin.math.*
 
@@ -58,8 +58,9 @@ object FarmingFeatures {
     var timeAlive = -1L
     var mobCoords: Vec3? = null
     var theodoliteUsed = false
+    val theodoliteError = 2.5
     private val mobRegex = Regex("§8\\[§7Lv\\d\\d?§8] §c(§.)?(?<rarity>\\w{1,13}) (?<type>\\w{1,10})§r §.[\\d,]+§f/§.[\\d,]+§.❤")
-    private val trevorRegex = Regex("§e\\[NPC] Trevor§f: §rYou can find your §.§l(?<rarity>TRACKABLE|UNTRACKABLE|UNDETECTED|ENDANGERED|ELUSIVE) §fanimal near the §.(?<location>(Desert Settlement|Oasis|Desert Mountain|Overgrown Mushroom Cave|Glowing Mushroom Cave|Mushroom Gorge))§f.§r")
+    private val trevorRegex = Regex("§e\\[NPC] Trevor§f: §rYou can find your §.§l(?<rarity>TRACKABLE|UNTRACKABLE|UNDETECTED|ENDANGERED|ELUSIVE) §fanimal near the (§.)?(?<location>(Desert Settlement|Oasis|Desert Mountain|Overgrown Mushroom Cave|Glowing Mushroom Cave|Mushroom Gorge))§f.§r")
     var acceptTrapperCommand = ""
 
     private val targetHeightRegex =
@@ -112,10 +113,14 @@ object FarmingFeatures {
                 }
                 if (Skytils.config.trapperSolver || Skytils.config.trapperInfo) {
                     animalRarity = mobMatch.groups["rarity"]!!.value.toTitleCase()
+                }
+                if (Skytils.config.trapperQuickWarp) {
                     animalLocation = mobMatch.groups["location"]!!.value
-
-
-
+                    if (animalLocation == "Desert Settlement") {
+                        QuickWarp.pushWarp(QuickWarp.Warp("desert","farming_1",System.currentTimeMillis(),5000,"desert","§eDesert Settlement"))
+                    } else if (animalLocation == "Oasis") {
+                        QuickWarp.pushWarp(QuickWarp.Warp("desert","farming_1",System.currentTimeMillis(),10000,"desert","§bOasis"))
+                    }
                 }
             }
 
@@ -130,10 +135,8 @@ object FarmingFeatures {
             }
 
             if (unformatted.startsWith("You are at the exact height!") && Skytils.config.talbotsTheodoliteHelper) {
-                targetMinY = mc.thePlayer.posY.toInt()
-                targetMaxY = mc.thePlayer.posY.toInt()
                 event.isCanceled = true
-                UChat.chat("You are at the exact height! ($targetMaxY)")
+                UChat.chat("You are at the exact height! (${mc.thePlayer.posY.toInt()}")
             }
 
             if (unformatted.startsWith("Return to the Trapper soon to get a new animal to hunt!")) {
@@ -142,6 +145,11 @@ object FarmingFeatures {
                     UChat.chat("$prefix §bTrapper cooldown has already expired!")
                     trapperCooldownExpire = -1
                 }
+
+                if (Skytils.config.trapperQuickWarp) {
+                    QuickWarp.pushWarp(QuickWarp.Warp("trapper","farming_1",System.currentTimeMillis(),5000,"trevor","§2Trevor"))
+                }
+
                 animalFound = true
                 animalLocation = null
                 animalRarity = null
@@ -159,51 +167,43 @@ object FarmingFeatures {
                     val below = match.groups["type"]!!.value == "below"
                     val y = mc.thePlayer.posY
                     val targetY = y.toInt() + if (below) -blocks else blocks
-                    val minTargetY = targetY - 2.5
-                    val maxTargetY = targetY + 2.5
-                    val minY = blocks - 2.5
-                    val maxY = blocks + 2.5
+                    val minTargetY = targetY - theodoliteError
+                    val maxTargetY = targetY + theodoliteError
+                    val minY = blocks - theodoliteError
+                    val maxY = blocks + theodoliteError
                     var passes = try {
                         Skytils.config.trapperSolverPasses.toInt()
                     } catch (e: NumberFormatException) {
                         4
                     }
-                    if (0 >= passes) passes = 4
+                    if (0 >= passes) passes = 16
 
 
                     event.isCanceled = true
                     UChat.chat("§r§aThe target is at §6Y §r§e$minTargetY-$maxTargetY §7($blocks blocks ${if (below) "below" else "above"}, $angle angle)")
                     if (Skytils.config.trapperSolver) {
-                        c.clear()
 
+                        c.clear()
                         val x = mc.thePlayer.posX
                         val z = mc.thePlayer.posZ
 
-                        val minAngle = Math.toRadians(if (below) (90 - angle + 2.5) else (90 - angle - 2.5))
-                        val maxAngle = Math.toRadians(if (below) (90 - angle - 2.5) else (90 - angle + 2.5))
+                        val minAngle = Math.toRadians(if (below) (90 - angle + theodoliteError) else (90 - angle - theodoliteError))
+                        val maxAngle = Math.toRadians(if (below) (90 - angle - theodoliteError) else (90 - angle + theodoliteError))
 
                         for (i in 1..passes) {
-
-                            val matrixStack = UMatrixStack()
                             val R = Math.toRadians((360*i/passes).toDouble()).toFloat()
+
                             val x1 = (x + (tan(minAngle) * (maxY)))
                             val x2 = (x + (tan(maxAngle) * (maxY)))
                             val x3 = (x + (tan(maxAngle) * (minY)))
                             val x4 = (x + (tan(minAngle) * (minY)))
-                            //matrixStack.translate(-x,-y,-z)
-                            //matrixStack.multiply(Quaternion(cos(rotation/2).toFloat(),0F,1F,0F))
-                            //matrixStack.rotate(rotation, 0F,1F, 0F,)
-                            //matrixStack.translate(x,y,z)
-                            //UChat.chat("${mc.thePlayer.posY.toInt()},$minY,$maxY,$minAngle,$maxAngle")
+
                             val c1 = Vec3(rotatex2d(R,x1,z,x,z), if (below) minTargetY else maxTargetY, rotatez2d(R,x1,z,x,z))
                             val c2 = Vec3(rotatex2d(R,x2,z,x,z), if (below) minTargetY else maxTargetY, rotatez2d(R,x2,z,x,z))
                             val c3 = Vec3(rotatex2d(R,x3,z,x,z), if (!below) minTargetY else maxTargetY, rotatez2d(R,x3,z,x,z))
                             val c4 = Vec3(rotatex2d(R,x4,z,x,z), if (!below) minTargetY else maxTargetY, rotatez2d(R,x4,z,x,z))
 
-                            //UChat.chat("§6${c1.x} ${c1.y} ${c1.z} §f- §6${c2.x} ${c2.y} ${c2.z} §f- §6${c3.x} ${c3.y} ${c3.z} §f- §6${c4.x} ${c4.y} ${c4.z}")
-
-                            c.add(Quad(c1,c2,c3,c4,3,Skytils.config.trapperSolverColor,matrixStack,0.5F))
-                            //UChat.chat("Added")
+                            c.add(Quad(c1,c2,c3,c4,3,Skytils.config.trapperSolverColor,UMatrixStack(),0.5F))
                         }
                         theodoliteUsed = true
                     }
@@ -292,7 +292,7 @@ object FarmingFeatures {
 
     @SubscribeEvent
     fun onRenderLivingPre(event: RenderLivingEvent.Pre<EntityLivingBase>) {
-        if (animalFound || mc.renderManager.isDebugBoundingBox || !Utils.inSkyblock || SBInfo.mode != "farming_1" || !Skytils.config.trapperSolver || !event.entity.hasCustomName() || event.entity !is EntityArmorStand) return
+        if (animalFound || !Utils.inSkyblock || SBInfo.mode != "farming_1" || !Skytils.config.trapperSolver || !event.entity.hasCustomName() || event.entity !is EntityArmorStand) return
         val entity = event.entity as EntityArmorStand
         val mobMatch = mobRegex.find(entity.customNameTag) ?: return
         if ((mobMatch.groups.get("rarity")?.value
