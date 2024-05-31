@@ -140,11 +140,13 @@ object GriffinBurrows {
         if (!Utils.inSkyblock || SBInfo.mode != SkyblockIsland.Hub.mode || !Skytils.config.mythoMobHealth || mc.thePlayer == null || mc.theWorld == null) return
         for (entity in mc.theWorld.loadedEntityList) {
             if (entity is EntityArmorStand && (entity.name.containsAny("Exalted","Stalwart","Minos"))) {
-                if (entity.name.contains(" §e0§f/") || entity.isDead && entity in mythoMobs) {mythoMobs.remove(entity);return}
+                if (entity.isDead && entity in mythoMobs) {mythoMobs.remove(entity);return}
                 if (entity in mythoMobs) return
                 mythoMobs.add(entity)
             }
         }
+        mythoMobs.forEach {if (it !in mc.theWorld.loadedEntityList) it.remove else continue}
+
     }
 
     @SubscribeEvent
@@ -657,7 +659,7 @@ object GriffinBurrows {
                     text.add("§8No recent Inquisitors.")
                 }
                 if (mythoMobs.isNotEmpty() && Skytils.config.mythoMobHealth) {
-                    mythoMobs.forEach { if (it in mc.theWorld.loadedEntityList) text.add(it.name) else mythoMobs.remove(it)}
+                    mythoMobs.forEach {text.add(it.name)}
                 }
                 RenderUtil.drawAllInList(this, if (text.isNotEmpty()) text else return)
 
