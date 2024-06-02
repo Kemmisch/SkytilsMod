@@ -25,7 +25,6 @@ import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.GuiManager
 import gg.skytils.skytilsmod.core.SoundQueue
 import gg.skytils.skytilsmod.core.structure.GuiElement
-import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.events.impl.MainReceivePacketEvent
 import gg.skytils.skytilsmod.events.impl.PacketEvent
 import gg.skytils.skytilsmod.features.impl.events.GriffinBurrows.BurrowEstimation.lastParticleTrail
@@ -75,7 +74,6 @@ object GriffinBurrows {
     var hasSpadeInHotbar = false
     var lastSpadeUse = -1L
     var lastInq = Inquisitor(Vec3(-2.5, 70.0, -69.5), 0,"null")
-    var mythoMobs = mutableListOf<EntityArmorStand>()
     var allowedWarps = linkedMapOf(Pair("Hub",true),Pair("Castle",false),Pair("Crypts",false),Pair("Museum",false),Pair("Wizard",false),Pair("Sirius",false))
     var menuOpened = false
 
@@ -108,10 +106,6 @@ object GriffinBurrows {
 
     init {
         MythoMobDisplay()
-
-        tickTimer(1,repeats=true) {
-            getMythoMobs()
-        }
     }
 
 
@@ -134,19 +128,6 @@ object GriffinBurrows {
         }
 
         class Arrow(val directionVector: Vec3, val pos: Vec3)
-    }
-
-    fun getMythoMobs() {
-        if (!Utils.inSkyblock || SBInfo.mode != SkyblockIsland.Hub.mode || !Skytils.config.mythoMobHealth || mc.thePlayer == null || mc.theWorld == null) return
-        for (entity in mc.theWorld.loadedEntityList) {
-            if (entity is EntityArmorStand && (entity.name.containsAny("Exalted","Stalwart","Minos"))) {
-                if (entity.isDead && entity in mythoMobs) {mythoMobs.remove(entity);return}
-                if (entity in mythoMobs) return
-                mythoMobs.add(entity)
-            }
-        }
-        mythoMobs.forEach {if (it !in mc.theWorld.loadedEntityList) it.remove else continue}
-
     }
 
     @SubscribeEvent
@@ -410,7 +391,6 @@ object GriffinBurrows {
     fun onWorldChange(event: WorldEvent.Unload) {
         particleBurrows.clear()
         recentlyDugParticleBurrows.clear()
-        mythoMobs.clear()
     }
 
     @SubscribeEvent
@@ -658,9 +638,16 @@ object GriffinBurrows {
                 } else {
                     text.add("§8No recent Inquisitors.")
                 }
-                if (mythoMobs.isNotEmpty() && Skytils.config.mythoMobHealth) {
-                    mythoMobs.forEach {text.add(it.name)}
+
+                if (Utils.inSkyblock && SBInfo.mode == SkyblockIsland.Hub.mode && Skytils.config.mythoMobHealth && mc.thePlayer != null && mc.theWorld != null) {
+                    for (entity in mc.theWorld.loadedEntityList) {
+                        if (!entity.isDead && entity is EntityArmorStand && (entity.name.containsAny("Exalted","Stalwart","Minos","Bagheera","Azrael"))) {
+                            text.add(entity.name)
+                        }
+                    }
+
                 }
+
                 RenderUtil.drawAllInList(this, if (text.isNotEmpty()) text else return)
 
             }
