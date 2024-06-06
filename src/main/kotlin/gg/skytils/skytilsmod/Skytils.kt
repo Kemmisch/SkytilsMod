@@ -50,6 +50,7 @@ import gg.skytils.skytilsmod.features.impl.mining.CHWaypoints
 import gg.skytils.skytilsmod.features.impl.mining.MiningFeatures
 import gg.skytils.skytilsmod.features.impl.mining.StupidTreasureChestOpeningThing
 import gg.skytils.skytilsmod.features.impl.misc.*
+import gg.skytils.skytilsmod.features.impl.misc.QuickWarp.keybindQuickWarp
 import gg.skytils.skytilsmod.features.impl.overlays.AuctionPriceOverlay
 import gg.skytils.skytilsmod.features.impl.protectitems.ProtectItems
 import gg.skytils.skytilsmod.features.impl.slayer.SlayerFeatures
@@ -59,11 +60,13 @@ import gg.skytils.skytilsmod.features.impl.spidersden.SpidersDenFeatures
 import gg.skytils.skytilsmod.features.impl.trackers.impl.DupeTracker
 import gg.skytils.skytilsmod.features.impl.trackers.impl.MayorJerryTracker
 import gg.skytils.skytilsmod.features.impl.trackers.impl.MythologicalTracker
+import gg.skytils.skytilsmod.features.impl.trackers.impl.TrapperTracker
 import gg.skytils.skytilsmod.gui.OptionsGui
 import gg.skytils.skytilsmod.gui.ReopenableGUI
 import gg.skytils.skytilsmod.listeners.ChatListener
 import gg.skytils.skytilsmod.listeners.DungeonListener
 import gg.skytils.skytilsmod.listeners.ServerPayloadInterceptor
+import gg.skytils.skytilsmod.listeners.ServerPayloadInterceptor.getResponse
 import gg.skytils.skytilsmod.localapi.LocalAPI
 import gg.skytils.skytilsmod.mixins.extensions.ExtensionEntityLivingBase
 import gg.skytils.skytilsmod.mixins.hooks.entity.EntityPlayerSPHook
@@ -87,6 +90,8 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
+import net.hypixel.modapi.packet.impl.clientbound.ClientboundPingPacket
+import net.hypixel.modapi.packet.impl.serverbound.ServerboundPingPacket
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiButton
 import net.minecraft.client.gui.GuiGameOver
@@ -103,6 +108,7 @@ import net.minecraftforge.client.event.GuiOpenEvent
 import net.minecraftforge.client.event.GuiScreenEvent
 import net.minecraftforge.client.event.RenderGameOverlayEvent
 import net.minecraftforge.common.MinecraftForge
+import net.minecraftforge.fml.client.registry.ClientRegistry
 import net.minecraftforge.fml.common.Loader
 import net.minecraftforge.fml.common.Mod
 import net.minecraftforge.fml.common.event.FMLInitializationEvent
@@ -172,6 +178,9 @@ class Skytils {
 
         @JvmField
         var usingSBA = false
+
+        @JvmField
+        var usingPatcher = false
 
         @JvmField
         var jarFile: File? = null
@@ -269,9 +278,11 @@ class Skytils {
 
         var domain = "api.skytils.gg"
 
-        const val prefix = "§9§lSkytils §8»"
-        const val successPrefix = "§a§lSkytils §8»"
-        const val failPrefix = "§c§lSkytils (${Reference.VERSION}) §8»"
+
+        const val prefix = "§9»"
+        const val successPrefix = "§a»"
+        const val failPrefix = "§c»"
+
 
         var trustClientTime = false
     }
@@ -282,6 +293,7 @@ class Skytils {
         guiManager = GuiManager
         jarFile = event.sourceFile
         mc.framebuffer.enableStencil()
+        ClientRegistry.registerKeyBinding(gg.skytils.skytilsmod.features.impl.misc.QuickWarp.keybindQuickWarp)
     }
 
     @Mod.EventHandler
@@ -353,6 +365,7 @@ class Skytils {
             MinionFeatures,
             MiscFeatures,
             MythologicalTracker,
+            TrapperTracker,
             PartyAddons,
             PartyFeatures,
             PartyFinderStats,
@@ -361,6 +374,7 @@ class Skytils {
             PotionEffectTimers,
             PricePaid,
             ProtectItems,
+            QuickWarp,
             QuiverStuff,
             RainTimer,
             RandomStuff,
@@ -398,6 +412,7 @@ class Skytils {
         usingLabymod = Loader.isModLoaded("labymod")
         usingNEU = Loader.isModLoaded("notenoughupdates")
         usingSBA = Loader.isModLoaded("skyblockaddons")
+        usingPatcher = Loader.isModLoaded("patcher")
 
         MayorInfo.fetchMayorData()
 
@@ -422,6 +437,7 @@ class Skytils {
         cch.registerCommand(FragBotCommand)
         cch.registerCommand(HollowWaypointCommand)
         cch.registerCommand(ItemCycleCommand)
+        cch.registerCommand(KismetProfitCommand)
         cch.registerCommand(LimboCommand)
         cch.registerCommand(OrderedWaypointCommand)
         cch.registerCommand(ScamCheckCommand)
@@ -522,12 +538,15 @@ class Skytils {
     }
 
     init {
-        tickTimer(20, repeats = true) {
+        tickTimer(200, repeats = true) {
             if (mc.thePlayer != null) {
-                if (deobfEnvironment) {
+                if (true) {
                     if (DevTools.toggles.getOrDefault("forcehypixel", false)) Utils.isOnHypixel = true
                     if (DevTools.toggles.getOrDefault("forceskyblock", false)) Utils.skyblock = true
                     if (DevTools.toggles.getOrDefault("forcedungeons", false)) Utils.dungeons = true
+                    if (DevTools.toggles.getOrDefault("forcemarauder", false)) Utils.marauder = true
+                    if (DevTools.toggles.getOrDefault("forceezpz", false)) Utils.ezpz = true
+                    if (DevTools.toggles.getOrDefault("forcemytho", false)) Utils.mytho = true
                 }
                 if (DevTools.getToggle("sprint"))
                     KeyBinding.setKeyBindState(mc.gameSettings.keyBindSprint.keyCode, true)

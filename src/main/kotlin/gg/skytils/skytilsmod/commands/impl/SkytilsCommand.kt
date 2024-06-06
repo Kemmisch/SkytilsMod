@@ -402,6 +402,7 @@ object SkytilsCommand : BaseCommand("skytils", listOf("st")) {
                         }.onSuccess { response ->
                             UChat.chat("$successPrefix §aPacket response: $response")
                         }
+
                     }
                 }
             }

@@ -655,9 +655,9 @@ object Config : Vigilant(
 
     @Property(
         type = PropertyType.NUMBER, name = "Dungeon Chest Reroll Protection Threshold",
-        description = "Prevents rerolling if the value of the items is higher than this value in millions.",
+        description = "Prevents rerolling if the value of the items is higher than this value.",
         category = "Dungeons", subcategory = "Quality of Life",
-        max = 1000,
+        max = 1000000000,
         i18nName = "skytils.config.dungeons.quality_of_life.dungeon_chest_reroll_protection_threshold",
         i18nCategory = "skytils.config.dungeons",
         i18nSubcategory = "skytils.config.dungeons.quality_of_life"
@@ -1081,14 +1081,24 @@ object Config : Vigilant(
     var showNextBlaze = false
 
     @Property(
-        type = PropertyType.SWITCH, name = "Line to Next Blaze",
-        description = "Draws line to next blaze to shoot in Higher or Lower.",
+        type = PropertyType.SWITCH, name = "Line Between Blazes",
+        description = "Draws line between current blaze and next blaze to shoot in Higher or Lower.",
         category = "Dungeons", subcategory = "Solvers",
         i18nName = "skytils.config.dungeons.solvers.line_to_next_blaze",
         i18nCategory = "skytils.config.dungeons",
         i18nSubcategory = "skytils.config.dungeons.solvers"
     )
     var lineToNextBlaze = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Line To Next Blaze ",
+        description = "Draws line to next blaze to shoot in Higher or Lower.",
+        category = "Dungeons", subcategory = "Solvers",
+        i18nName = "skytils.config.dungeons.solvers.player_blaze_line",
+        i18nCategory = "skytils.config.dungeons",
+        i18nSubcategory = "skytils.config.dungeons.solvers"
+    )
+    var playerBlazeLine = false
 
     @Property(
         type = PropertyType.COLOR, name = "Lowest Blaze Color",
@@ -1128,7 +1138,7 @@ object Config : Vigilant(
         i18nCategory = "skytils.config.dungeons",
         i18nSubcategory = "skytils.config.dungeons.solvers"
     )
-    var lineToNextBlazeColor = Color(255, 255, 0, 200)
+    var lineToNextBlazeColor = Color(255, 255, 0, 125)
 
     @Property(
         type = PropertyType.SWITCH, name = "Boulder Solver",
@@ -1585,6 +1595,13 @@ object Config : Vigilant(
     var experimentBurrowEstimation = false
 
     @Property(
+        type = PropertyType.SWITCH, name = "Griffin Burrow Estimation Quick Warp",
+        description = "Provides a suggested warp based on burrow guessed location - you must open the hub warp menu for this to work.",
+        category = "Events", subcategory = "Mythological"
+    )
+    var burrowEstimationQuickWarp = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Broadcast Rare Drop Notifications",
         description = "Sends rare drop notification when you obtain a rare drop from a Mythological Creature.",
         category = "Events", subcategory = "Mythological",
@@ -1616,6 +1633,72 @@ object Config : Vigilant(
         i18nSubcategory = "skytils.config.events.mythological"
     )
     var trackMythEvent = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Send Inquisitor Coords",
+        description = "Sends coordiantes of inquisitors you dig up to party chat.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Tracker", "Inquisitor"],
+        i18nName = "skytils.config.events.mythological.send_inquisitor_coords",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var sendInquisitorCoords = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Receive Inquisitor Coords",
+        description = "Draws coordiantes of inquisitors from party chat.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Tracker", "Inquisitor"],
+        i18nName = "skytils.config.events.mythological.draw_inquisitor_coords",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var drawInquisitorCoords = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Inquisitor Quick Warp",
+        description = "Suggests a warp based on received Inquisitor coords.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Tracker", "Inquisitor","Warp"],
+        i18nName = "skytils.config.events.mythological.inquisitor_quick_warp",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var inquisitorQuickWarp = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Mytho Mob Info",
+        description = "Shows information on mythological mobs on screen.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Burrow", "Borrow"],
+        i18nName = "skytils.config.events.mythological.mytho_mob_info",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var mythoMobInfo = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Mytho Mob Health",
+        description = "Shows health of mythological mobs on screen.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Burrow", "Borrow"],
+        i18nName = "skytils.config.events.mythological.mytho_mob_health",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var mythoMobHealth = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Information on last Inquisitor",
+        description = "Shows info on last inquisitor.",
+        category = "Events", subcategory = "Mythological",
+        searchTags = ["Griffin", "Diana", "Myth", "Burrow", "Borrow","Inquisitor"],
+        i18nName = "skytils.config.events.mythological.last_inq_info",
+        i18nCategory = "skytils.config.events",
+        i18nSubcategory = "skytils.config.events.mythological"
+    )
+    var lastInqInfo = false
 
     @Property(
         type = PropertyType.SWITCH, name = "Trick or Treat Chest Alert",
@@ -1701,6 +1784,16 @@ object Config : Vigilant(
     var visitorNotifications = false
 
     @Property(
+        type = PropertyType.SWITCH, name = "Garden Quick Warp",
+        description = "Suggests /warp garden to go back to the start of your farm.",
+        category = "Farming", subcategory = "Garden",
+        i18nName = "skytils.config.farming.garden.garden_quick_warp",
+        i18nCategory = "skytils.config.farming",
+        i18nSubcategory = "skytils.config.farming.garden"
+    )
+    var gardenQuickWarp = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Hide Farming RNG Titles",
         description = "Removes the titles that show up after getting a drop with Pumpkin Dicer / Melon Dicer",
         category = "Farming", subcategory = "Quality of Life",
@@ -1741,6 +1834,16 @@ object Config : Vigilant(
     var acceptTrapperTask = true
 
     @Property(
+        type = PropertyType.SWITCH, name = "Trapper Quick Warp",
+        description = "Press a key to warp to a suggested location based on trevor's dialogue",
+        category = "Farming", subcategory = "Quality of Life",
+        i18nName = "skytils.config.farming.quality_of_life.trapper_quick_warp",
+        i18nCategory = "skytils.config.farming",
+        i18nSubcategory = "skytils.config.farming.quality_of_life"
+    )
+    var trapperQuickWarp = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Trapper Cooldown Alarm",
         description = "Quickly plays five notes once the Trapper is off cooldown.",
         category = "Farming", subcategory = "Quality of Life",
@@ -1751,6 +1854,16 @@ object Config : Vigilant(
     var trapperPing = false
 
     @Property(
+        type = PropertyType.SWITCH, name = "Trapper Mob Info",
+        description = "Shows info about ctrapper mobs",
+        category = "Farming", subcategory = "Quality of Life",
+        i18nName = "skytils.config.farming.quality_of_life.trapper_info",
+        i18nCategory = "skytils.config.farming",
+        i18nSubcategory = "skytils.config.farming.quality_of_life"
+    )
+    var trapperInfo = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Talbot's Theodolite Helper",
         description = "Shows Y coordinate bounds based on Talbot's Theodolite output",
         category = "Farming", subcategory = "Quality of Life",
@@ -1759,6 +1872,36 @@ object Config : Vigilant(
         i18nSubcategory = "skytils.config.farming.quality_of_life"
     )
     var talbotsTheodoliteHelper = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Trapper Solver",
+        description = "Shows Possible Locations for trapper mob based on theodolite info, and finds mobs.",
+        category = "Farming", subcategory = "Quality of Life",
+        i18nName = "skytils.config.farming.quality_of_life.trapper_solver",
+        i18nCategory = "skytils.config.farming",
+        i18nSubcategory = "skytils.config.farming.quality_of_life"
+    )
+    var trapperSolver = false
+
+    @Property(
+        type = PropertyType.COLOR, name = "Trapper Solver Color",
+        description = "Color used to draw trapper solver lines",
+        category = "Farming", subcategory = "Quality of Life",
+        i18nName = "skytils.config.farming.quality_of_life.trapper_solver_color",
+        i18nCategory = "skytils.config.farming",
+        i18nSubcategory = "skytils.config.farming.quality_of_life"
+    )
+    var trapperSolverColor = Color.CYAN
+
+    @Property(
+        type = PropertyType.TEXT, name = "Trapper solver passes",
+        description = "Amount of passes used to display theodolite - will cause lag if turned up beyond base value",
+        category = "Farming", subcategory = "Quality of Life",
+        i18nName = "skytils.config.farming.quality_of_life.trapper_solver_passes",
+        i18nCategory = "skytils.config.farming",
+        i18nSubcategory = "skytils.config.farming.quality_of_life"
+    )
+    var trapperSolverPasses = "4"
 
     @Property(
         type = PropertyType.SWITCH, name = "Hide Non-Nametag Armor Stands on Kuudra",
@@ -3671,6 +3814,16 @@ object Config : Vigilant(
     var highlightNukekebiHeads = false
 
     @Property(
+        PropertyType.SWITCH, name = "Point to Nukebi Fixations",
+        description = "Draws an arrow in the direction of the Nukebi Fixations.",
+        category = "Slayer", subcategory = "Voidgloom Seraph",
+        i18nName = "skytils.config.slayer.voidgloom_seraph.point_to_nukebi_fixation_heads",
+        i18nCategory = "skytils.config.slayer",
+        i18nSubcategory = "skytils.config.slayer.voidgloom_seraph"
+    )
+    var pointNukebiHeads = false
+
+    @Property(
         PropertyType.COLOR, name = "Nukekebi Fixation Head Color",
         description = "Changes the color for the Nukekebi Fixation Head Highlight",
         category = "Slayer", subcategory = "Voidgloom Seraph",
@@ -4324,6 +4477,10 @@ object Config : Vigilant(
 
         addDependency("samScytheColor", "showSamScytheBlocks")
 
+        addDependency("trapperSolver", "talbotsTheodoliteHelper")
+        addDependency("trapperSolverColor","trapperSolver")
+        addDependency("trapperSolverPasses","trapperSolver")
+
         addDependency("itemRarityOpacity", "showItemRarity")
         addDependency("itemRarityShape", "showItemRarity")
         addDependency("showPetRarity", "showItemRarity")
@@ -4395,6 +4552,12 @@ object Config : Vigilant(
             "pingNearbyBurrow",
             "experimentBurrowEstimation"
         ).forEach { propertyName -> addDependency(propertyName, "showGriffinBurrows") }
+
+        addDependency("burrowEstimationQuickWarp","burrowEstimation")
+
+        addDependency("mythoMobHealth", "mythoMobInfo")
+        addDependency("lastInqInfo", "mythoMobInfo")
+        addDependency("inquisitorQuickWarp","drawInquisitorCoords")
 
         addDependency("activePetColor", "highlightActivePet")
         addDependency("favoritePetColor", "highlightFavoritePets")

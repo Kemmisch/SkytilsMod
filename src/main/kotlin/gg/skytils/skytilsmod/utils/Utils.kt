@@ -32,6 +32,7 @@ import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.asm.SkytilsTransformer
 import gg.skytils.skytilsmod.events.impl.MainReceivePacketEvent
 import gg.skytils.skytilsmod.events.impl.PacketEvent.ReceiveEvent
+import gg.skytils.skytilsmod.features.impl.handlers.MayorInfo
 import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorGuiNewChat
 import gg.skytils.skytilsmod.utils.NumberUtil.roundToPrecision
 import gg.skytils.skytilsmod.utils.graphics.colors.ColorFactory.web
@@ -71,6 +72,24 @@ object Utils {
 
     val inSkyblock: Boolean
         get() = skyblock || SBInfo.mode == "SKYBLOCK"
+
+    @JvmField
+    var marauder= false
+
+    val isMarauder: Boolean
+        get() = marauder || (MayorInfo.currentMayor == "Paul" && MayorInfo.mayorPerks.contains("Marauder")) || MayorInfo.jerryMayor?.name == "Paul"
+
+    @JvmField
+    var ezpz = false
+
+    val isEZPZ: Boolean
+        get() = ezpz || (MayorInfo.currentMayor == "Paul" && MayorInfo.mayorPerks.contains("EZPZ")) || MayorInfo.jerryMayor?.name == "Paul"
+
+    @JvmField
+    var mytho = false
+
+    val isMytho: Boolean
+        get() = mytho || (MayorInfo.currentMayor == "Diana" && MayorInfo.mayorPerks.contains("Mythological Ritual")) || MayorInfo.jerryMayor?.name == "Diana"
 
     @JvmField
     var dungeons = false
@@ -294,6 +313,18 @@ fun Entity.getXZDistSq(other: Entity): Double {
 fun Entity.getXZDistSq(pos: BlockPos): Double {
     val xDelta = this.posX - pos.x
     val zDelta = this.posZ - pos.z
+    return xDelta * xDelta + zDelta * zDelta
+}
+
+fun Vec3.getXZDistSq(pos: BlockPos): Double {
+    val xDelta = this.x - pos.x
+    val zDelta = this.z - pos.z
+    return xDelta * xDelta + zDelta * zDelta
+}
+
+fun Vec3.getXZDistSq(pos: Vec3): Double {
+    val xDelta = this.x - pos.x
+    val zDelta = this.z - pos.z
     return xDelta * xDelta + zDelta * zDelta
 }
 

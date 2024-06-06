@@ -382,7 +382,7 @@ object ColorFactory {
             }
         } catch (_: NumberFormatException) {
         }
-        throw IllegalArgumentException("Invalid color specification")
+        return Color.WHITE
     }
 
     private fun parseRGBColor(
