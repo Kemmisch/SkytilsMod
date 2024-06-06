@@ -43,6 +43,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import net.minecraft.client.gui.ChatLine
 import net.minecraft.client.gui.GuiNewChat
+import net.minecraft.client.network.NetHandlerPlayClient
 import net.minecraft.client.settings.GameSettings
 import net.minecraft.entity.Entity
 import net.minecraft.entity.EntityLivingBase
@@ -107,6 +108,8 @@ object Utils {
 
     @JvmField
     var lastRenderedSkullEntity: EntityLivingBase? = null
+
+    var lastNHPC: NetHandlerPlayClient? = null
 
     @JvmStatic
     var random = Random()
@@ -310,6 +313,18 @@ fun Entity.getXZDistSq(other: Entity): Double {
 fun Entity.getXZDistSq(pos: BlockPos): Double {
     val xDelta = this.posX - pos.x
     val zDelta = this.posZ - pos.z
+    return xDelta * xDelta + zDelta * zDelta
+}
+
+fun Vec3.getXZDistSq(pos: BlockPos): Double {
+    val xDelta = this.x - pos.x
+    val zDelta = this.z - pos.z
+    return xDelta * xDelta + zDelta * zDelta
+}
+
+fun Vec3.getXZDistSq(pos: Vec3): Double {
+    val xDelta = this.x - pos.x
+    val zDelta = this.z - pos.z
     return xDelta * xDelta + zDelta * zDelta
 }
 
