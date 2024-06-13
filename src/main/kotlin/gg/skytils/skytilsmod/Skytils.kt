@@ -352,6 +352,7 @@ class Skytils {
             IcePathSolver,
             ItemCycle,
             ItemFeatures,
+            InstantBuyConfirm,
             KeyShortcuts,
             KuudraChestProfit,
             KuudraFeatures,
@@ -437,6 +438,7 @@ class Skytils {
         cch.registerCommand(FragBotCommand)
         cch.registerCommand(HollowWaypointCommand)
         cch.registerCommand(ItemCycleCommand)
+        cch.registerCommand(JoinCommand)
         cch.registerCommand(KismetProfitCommand)
         cch.registerCommand(LimboCommand)
         cch.registerCommand(OrderedWaypointCommand)

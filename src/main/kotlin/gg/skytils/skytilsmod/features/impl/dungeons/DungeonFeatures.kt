@@ -18,6 +18,7 @@
 package gg.skytils.skytilsmod.features.impl.dungeons
 
 import gg.essential.api.EssentialAPI
+import gg.essential.elementa.state.BasicState
 import gg.essential.universal.UChat
 import gg.essential.universal.UMatrixStack
 import gg.skytils.skytilsmod.Skytils
@@ -25,28 +26,26 @@ import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.Skytils.Companion.prefix
 import gg.skytils.skytilsmod.core.GuiManager
 import gg.skytils.skytilsmod.core.structure.GuiElement
+import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.events.impl.*
 import gg.skytils.skytilsmod.events.impl.GuiContainerEvent.SlotClickEvent
 import gg.skytils.skytilsmod.events.impl.PacketEvent.ReceiveEvent
+import gg.skytils.skytilsmod.features.impl.dungeons.ScoreCalculation.ScoreCalculationElement
+import gg.skytils.skytilsmod.features.impl.dungeons.ScoreCalculation.ScoreCalculationElement.Companion
+import gg.skytils.skytilsmod.features.impl.dungeons.ScoreCalculation.isEZPZ
 import gg.skytils.skytilsmod.features.impl.dungeons.catlas.handlers.DungeonInfo
 import gg.skytils.skytilsmod.features.impl.handlers.MayorInfo
 import gg.skytils.skytilsmod.listeners.DungeonListener
 import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorC0EPacketClickWindow
-import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorEnumDyeColor
 import gg.skytils.skytilsmod.utils.*
 import gg.skytils.skytilsmod.utils.ItemUtil.setLore
 import gg.skytils.skytilsmod.utils.Utils.equalsOneOf
 import gg.skytils.skytilsmod.utils.graphics.ScreenRenderer
 import gg.skytils.skytilsmod.utils.graphics.SmartFontRenderer.TextAlignment
 import gg.skytils.skytilsmod.utils.graphics.colors.CommonColors
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import net.minecraft.block.BlockStainedGlass
 import net.minecraft.client.entity.EntityOtherPlayerMP
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.client.renderer.GlStateManager
-import net.minecraft.entity.Entity
 import net.minecraft.entity.boss.BossStatus
 import net.minecraft.entity.item.EntityArmorStand
 import net.minecraft.entity.item.EntityItem
@@ -58,17 +57,13 @@ import net.minecraft.event.HoverEvent
 import net.minecraft.init.Blocks
 import net.minecraft.init.Items
 import net.minecraft.inventory.ContainerChest
-import net.minecraft.item.EnumDyeColor
 import net.minecraft.item.ItemSkull
 import net.minecraft.item.ItemStack
 import net.minecraft.network.play.client.C0EPacketClickWindow
 import net.minecraft.network.play.server.*
-import net.minecraft.potion.Potion
 import net.minecraft.util.AxisAlignedBB
 import net.minecraft.util.BlockPos
 import net.minecraft.util.ChatComponentText
-import net.minecraft.util.EnumChatFormatting
-import net.minecraft.world.World
 import net.minecraftforge.client.event.ClientChatReceivedEvent
 import net.minecraftforge.client.event.GuiOpenEvent
 import net.minecraftforge.client.event.RenderLivingEvent
@@ -124,10 +119,19 @@ object DungeonFeatures {
         "Fels",
         "Withermancer"
     )
+    private val blessingRegex = Regex("§?§r?§6§lDUNGEON BUFF! §r§.(?<name>[^ ]{1,16}) (§r§f)?(found a )?§r§dBlessing of (?<blessing>(Life|Power|Wisdom|Stone|Time)) (?<level>[^§]{1,4}).*")
+    private var blessingLevels = mutableMapOf<String,Double>("Power" to 0.0, "Life" to 0.0, "Wisdom" to 0.0, "Stone" to 0.0, "Time" to 0.0)
+    private val blessings = listOf("Power","Life","Wisdom","Stone","Time")
+    var isBenediction = false
 
     init {
         DungeonSecretDisplay
+        BlessingLevelDisplay
         SpiritBearSpawnTimer()
+        tickTimer(200, repeats = true) {
+            isBenediction = (MayorInfo.currentMayor == "Paul" && MayorInfo.mayorPerks.contains("Benediction")) || MayorInfo.jerryMayor?.name == "Paul"
+
+        }
     }
 
     @SubscribeEvent
@@ -383,6 +387,24 @@ object DungeonFeatures {
                         terracottaSpawns.clear()
                     }
                 }
+            }
+            if (Skytils.config.blessingLevelDisplay) {
+                val blessing = blessingRegex.find(event.message.formattedText)
+                if (blessing != null) {
+                    UChat.chat("Success.")
+                    val type = blessing.groups.get("blessing")?.value
+                    val levelAra = when (blessing.groups.get("level")?.value) {
+                        "I" -> 1.0
+                        "II" -> 2.0
+                        "III" -> 3.0
+                        "IV" -> 4.0
+                        "V" -> 5.0
+                        else -> return
+                    }
+                    //UChat.chat("$type @ ${blessing.groups.get("level")?.value} -> $levelAra")
+                    blessingLevels[type ?: return] = blessingLevels[type]!! + levelAra
+                }
+
             }
         }
     }
@@ -672,6 +694,7 @@ object DungeonFeatures {
         terracottaSpawns.clear()
         fakeDungeonMap = null
         intendedItemStack = null
+        blessingLevels = mutableMapOf("Power" to 0.0, "Life" to 0.0, "Wisdom" to 0.0, "Stone" to 0.0, "Time" to 0.0)
     }
 
     class SpiritBearSpawnTimer : GuiElement("Spirit Bear Spawn Timer", x = 0.05f, y = 0.4f) {
@@ -768,6 +791,56 @@ object DungeonFeatures {
 
         override val toggled: Boolean
             get() = Skytils.config.dungeonSecretDisplay
+
+        init {
+            Skytils.guiManager.registerElement(this)
+        }
+    }
+
+    object BlessingLevelDisplay : GuiElement("Blessing Display", x = 0.05f, y = 0.4f) {
+
+        override fun render() {
+            if (toggled && Utils.inDungeons) {
+                val text = mutableListOf<String>()
+                if (Skytils.config.blessingLevelPowerEquivalent && Skytils.config.blessingLevelDisplayEquivalent) {
+                    text.add("§l§dPower: ${((blessingLevels["Power"]!! + 0.5 * blessingLevels["Time"]!!)) * (if (isBenediction) 1.25 else 1.0)}")
+                } else if (Skytils.config.blessingLevelDisplayFormat) {
+                    text.add("§d${if (Skytils.config.blessingLevelDisplayEquivalent) ((blessingLevels["Power"]!! + blessingLevels["Time"]!!/2) * (if (isBenediction) 1.25 else 1.0)) else blessingLevels["Power"]}§7/§c${blessingLevels["Life"]!! * (if (isBenediction && Skytils.config.blessingLevelDisplayEquivalent) 1.25 else 1.0)}§7/§§b${blessingLevels["Wisdom"]!! * (if (isBenediction && Skytils.config.blessingLevelDisplayEquivalent) 1.25 else 1.0)}§7/§a${blessingLevels["Stone"]}§7/§e${blessingLevels["Time"]!! * (if (isBenediction && Skytils.config.blessingLevelDisplayEquivalent) 1.25 else 1.0)} ${if (!Skytils.config.blessingLevelDisplayEquivalent && isBenediction) "§6[x1.25]" else ""}")
+                } else {
+                    text.add("§3Blessings:")
+                    text.add("§dPower: ${if (Skytils.config.blessingLevelDisplayEquivalent) ((blessingLevels["Power"]!! + blessingLevels["Time"]!!/2) * (if (isBenediction) 1.25 else 1.0)) else blessingLevels["Power"]}")
+                    text.add("§cLife: ${blessingLevels["Life"]!! * (if (isBenediction && Skytils.config.blessingLevelDisplayEquivalent) 1.25 else 1.0)}")
+                    text.add("§bWisdom: ${blessingLevels["Wisdom"]!! * (if (isBenediction && Skytils.config.blessingLevelDisplayEquivalent) 1.25 else 1.0)}")
+                    text.add("§aStone: ${blessingLevels["Stone"]!! * (if (isBenediction && Skytils.config.blessingLevelDisplayEquivalent) 1.25 else 1.0)}")
+                    text.add("§eTime: ${blessingLevels["Time"]!! * (if (isBenediction && Skytils.config.blessingLevelDisplayEquivalent) 1.25 else 1.0)}")
+                    if (!Skytils.config.blessingLevelDisplayEquivalent && isBenediction) text.add("§6[x1.25] (Benediction)") else text.add("")
+                }
+
+
+                RenderUtil.drawAllInList(this, text)
+            }
+        }
+
+        override fun demoRender() {
+            val leftAlign = scaleX < sr.scaledWidth / 2f
+            val alignment = if (leftAlign) TextAlignment.LEFT_RIGHT else TextAlignment.RIGHT_LEFT
+            ScreenRenderer.fontRenderer.drawString(
+                "§dP22§7/§cL30§7/§§bW13§7/§aS9§7/§e5",
+                if (leftAlign) 0f else 0f + width,
+                0f,
+                CommonColors.WHITE,
+                alignment,
+                textShadow
+            )
+        }
+
+        override val height: Int
+            get() = ScreenRenderer.fontRenderer.FONT_HEIGHT
+        override val width: Int
+            get() = ScreenRenderer.fontRenderer.getStringWidth("§dP22§7/§cL30§7/§§bW13§7/§aS9§7/§e5")
+
+        override val toggled: Boolean
+            get() = Skytils.config.blessingLevelDisplay
 
         init {
             Skytils.guiManager.registerElement(this)

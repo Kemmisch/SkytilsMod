@@ -28,28 +28,30 @@ import gg.skytils.skytilsmod.features.impl.handlers.AuctionData
 import gg.skytils.skytilsmod.utils.Utils.isMarauder
 
 object KismetProfitCommand : BaseCommand("kismetprofit", aliases = listOf("kismet")) {
+
+    data class ItemDrop(val normalChance: Double, val masterChance: Double, val skyblockItemID: String, val chestPrice: Int)
+
+    private val seventhLoot = listOf(
+        ItemDrop(0.54, 0.89, "AUTO_RECOMBOBULATOR", 10000000),
+        ItemDrop(0.13, 0.18, "IMPLOSION_SCROLL", 50000000),
+        ItemDrop(0.13, 0.18, "SHADOW_WARP_SCROLL", 50000000),
+        ItemDrop(0.13, 0.18, "WITHER_SHIELD_SCROLL", 50000000),
+        ItemDrop(0.1, 0.13, "NECRON_HANDLE", 100000000),
+        ItemDrop(4.29, 6.73, "RECOMBOBULATOR_3000", 6000000),
+        ItemDrop(6.3, 7.0, "WITHER_BOOTS", 2500000),
+        ItemDrop(3.43, 4.31, "WITHER_LEGGINGS", 6000000),
+        ItemDrop(0.53, 0.95, "WITHER_CHESTPLATE", 10000000),
+        ItemDrop(5.95, 6.73, "WITHER_HELMET", 4000000),
+        ItemDrop(0.0, 0.08, "DARK_CLAYMORE", 150000000),
+        ItemDrop(0.0, 0.33, "FIFTH_MASTER_STAR", 9000000),
+        ItemDrop(0.0, 0.04, "NECRON_DYE", 10000000),
+        ItemDrop(0.0, 0.33, "MASTER_SKULL_TIER_5", 32000000)
+    )
+
     override fun getCommandUsage(player: EntityPlayerSP): String =
         "/kismetprofit (master)"
 
     override fun processCommand(player: EntityPlayerSP, args: Array<String>) {
-        data class ItemDrop(val normalChance: Double, val masterChance: Double, val skyblockItemID: String, val chestPrice: Int)
-
-        val seventhLoot = listOf(
-            ItemDrop(0.54, 0.89, "AUTO_RECOMBOBULATOR", 10000000),
-            ItemDrop(0.13, 0.18, "IMPLOSION_SCROLL", 50000000),
-            ItemDrop(0.13, 0.18, "SHADOW_WARP_SCROLL", 50000000),
-            ItemDrop(0.13, 0.18, "WITHER_SHIELD_SCROLL", 50000000),
-            ItemDrop(0.1, 0.13, "NECRON_HANDLE", 100000000),
-            ItemDrop(4.29, 6.73, "RECOMBOBULATOR_3000", 6000000),
-            ItemDrop(6.3, 7.0, "WITHER_BOOTS", 2500000),
-            ItemDrop(3.43, 4.31, "WITHER_LEGGINGS", 6000000),
-            ItemDrop(0.53, 0.95, "WITHER_CHESTPLATE", 10000000),
-            ItemDrop(5.95, 6.73, "WITHER_HELMET", 4000000),
-            ItemDrop(0.0, 0.08, "DARK_CLAYMORE", 150000000),
-            ItemDrop(0.0, 0.33, "FIFTH_MASTER_STAR", 9000000),
-            ItemDrop(0.0, 0.04, "NECRON_DYE", 10000000),
-            ItemDrop(0.0, 0.33, "MASTER_SKULL_TIER_5", 32000000)
-        )
 
         var averageDropProfit = 0.0
 
