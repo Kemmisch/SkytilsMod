@@ -391,7 +391,7 @@ object DungeonFeatures {
             if (Skytils.config.blessingLevelDisplay) {
                 val blessing = blessingRegex.find(event.message.formattedText)
                 if (blessing != null) {
-                    UChat.chat("Success.")
+                    //UChat.chat("Success.")
                     val type = blessing.groups.get("blessing")?.value
                     val levelAra = when (blessing.groups.get("level")?.value) {
                         "I" -> 1.0
