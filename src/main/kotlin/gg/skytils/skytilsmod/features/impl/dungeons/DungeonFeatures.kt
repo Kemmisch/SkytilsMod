@@ -30,6 +30,10 @@ import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.events.impl.*
 import gg.skytils.skytilsmod.events.impl.GuiContainerEvent.SlotClickEvent
 import gg.skytils.skytilsmod.events.impl.PacketEvent.ReceiveEvent
+<<<<<<< Updated upstream
+=======
+import gg.skytils.skytilsmod.events.impl.skyblock.DungeonEvent
+>>>>>>> Stashed changes
 import gg.skytils.skytilsmod.features.impl.dungeons.ScoreCalculation.ScoreCalculationElement
 import gg.skytils.skytilsmod.features.impl.dungeons.ScoreCalculation.ScoreCalculationElement.Companion
 import gg.skytils.skytilsmod.features.impl.dungeons.ScoreCalculation.isEZPZ
