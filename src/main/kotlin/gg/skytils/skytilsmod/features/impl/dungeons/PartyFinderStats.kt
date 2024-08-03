@@ -57,7 +57,12 @@ object PartyFinderStats {
             val match = partyFinderRegex.find(event.message.formattedText.stripControlCodes()) ?: return
             val username = match.groups["name"]?.value ?: return
             if (username == mc.thePlayer.name) return
-            printStats(username, true)
+            event.isCanceled = true
+            val joinText = UMessage(event.message.formattedText).append(
+                UTextComponent("\n§c§l[KICK]\n").setHoverText("§cClick to kick ${username}§c.")
+                    .setClick(ClickEvent.Action.RUN_COMMAND, "/p kick $username")
+            ).chat()
+            printStats(username, false)
         }
     }
 
@@ -274,7 +279,7 @@ object PartyFinderStats {
                     if (withKick) {
                         component.append(
                             UTextComponent("\n§c§l[KICK]\n").setHoverText("§cClick to kick ${name}§c.")
-                                .setClick(ClickEvent.Action.SUGGEST_COMMAND, "/p kick $username")
+                                .setClick(ClickEvent.Action.RUN_COMMAND, "/p kick $username")
                         )
                     }
 

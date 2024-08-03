@@ -54,6 +54,27 @@ object DungeonChestProfit {
     private var rerollBypass = false
     private val essenceRegex = Regex("§d(?<type>\\w+) Essence §8x(?<count>\\d+)")
     private val croesusChestRegex = Regex("^(Master Mode|The)? Catacombs - Floor (IV|V?I{0,3})$")
+    private val ignoreItems = setOf(
+        "ENCHANTED_BOOK-INFINITE_QUIVER-6",
+        "ENCHANTED_BOOK-INFINITE_QUIVER-7",
+        "ENCHANTED_BOOK-INFINITE_QUIVER-8",
+        "ENCHANTED_BOOK-FEATHER_FALLING-6",
+        "ENCHANTED_BOOK-FEATHER_FALLING-7",
+        "ENCHANTED_BOOK-ULTIMATE_JERRY-1",
+        "ENCHANTED_BOOK-ULTIMATE_JERRY-2",
+        "ENCHANTED_BOOK-ULTIMATE_JERRY-3",
+        "ENCHANTED_BOOK-ULTIMATE_BANK-1",
+        "ENCHANTED_BOOK-ULTIMATE_BANK-2",
+        "ENCHANTED_BOOK-ULTIMATE_BANK-3",
+        "ENCHANTED_BOOK-ULTIMATE_COMBO-1",
+        "ENCHANTED_BOOK-ULTIMATE_COMBO-2",
+        "ENCHANTED_BOOK-ULTIMATE_COMBO-3",
+        "DUNGEON_DISC_1",
+        "DUNGEON_DISC_2",
+        "DUNGEON_DISC_3",
+        "DUNGEON_DISC_4",
+        "DUNGEON_DISC_5"
+    )
 
     @SubscribeEvent
     fun onGUIDrawnEvent(event: GuiContainerEvent.ForegroundDrawnEvent) {
@@ -78,7 +99,7 @@ object DungeonChestProfit {
                     val lootSlot = inv.getStackInSlot(i) ?: continue
                     val identifier = AuctionData.getIdentifier(lootSlot)
                     val value = if (identifier != null) {
-                        AuctionData.lowestBINs[identifier] ?: 0.0
+                        if (identifier in ignoreItems) 0.0 else AuctionData.lowestBINs[identifier] ?: 0.0
                     } else {
                         getEssenceValue(lootSlot.displayName) ?: continue
                     }

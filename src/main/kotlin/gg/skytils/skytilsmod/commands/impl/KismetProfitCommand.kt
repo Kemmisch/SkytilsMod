@@ -28,28 +28,42 @@ import gg.skytils.skytilsmod.features.impl.handlers.AuctionData
 import gg.skytils.skytilsmod.utils.Utils.isMarauder
 
 object KismetProfitCommand : BaseCommand("kismetprofit", aliases = listOf("kismet")) {
+
+    data class ItemDrop(val normalChance: Double, val masterChance: Double, val skyblockItemID: String?, val chestPrice: Int, val nU: Int, val mU: Int, val c: Int)
+
+    private val seventhLoot = listOf(
+        ItemDrop(0.54, 0.89, "AUTO_RECOMBOBULATOR", 10000000,33,33,1),
+        ItemDrop(0.13, 0.18, "IMPLOSION_SCROLL", 50000000,35,38,1),
+        ItemDrop(0.13, 0.18, "SHADOW_WARP_SCROLL", 50000000,35,38,1),
+        ItemDrop(0.13, 0.18, "WITHER_SHIELD_SCROLL", 50000000,35,38,1),
+        ItemDrop(0.1, 0.18295, "NECRON_HANDLE", 100000000,36,38,1),
+        ItemDrop(4.29, 6.73, "RECOMBOBULATOR_3000", 6000000,25,25,1),
+        ItemDrop(6.3, 7.0, "WITHER_BOOTS", 2500000,17,17,1),
+        ItemDrop(3.43, 4.31, "WITHER_LEGGINGS", 6000000,25,25,1),
+        ItemDrop(0.53, 0.95, "WITHER_CHESTPLATE", 10000000,31,31,1),
+        ItemDrop(5.95, 6.73, "WITHER_HELMET", 4000000,21,21,1),
+        ItemDrop(0.0, 0.08, "DARK_CLAYMORE", 150000000,100,36,1),
+        ItemDrop(0.0, 0.33, "FIFTH_MASTER_STAR", 9000000,100,32,1),
+        ItemDrop(0.0, 0.04, "NECRON_DYE", 10000000,100,20,1),
+        ItemDrop(0.0, 0.33, "MASTER_SKULL_TIER_5", 32000000,100,25,1)/*,
+        ItemDrop(5.27,5.88,"WITHER_CATALYST",2000000,16,16,1),//catalyst
+        ItemDrop(5.27,5.85,"FUMING_POTATO_BOOK",2000000,17,17,1),//fuming
+        ItemDrop(5.95,6.73,"WITHER_BLOOD",3000000,21,21,1),//wither blood
+        ItemDrop(5.44,6.73,"WITHER_CLOAK",4500000,23,23,1),//wither cloak
+        ItemDrop(15.7,17.15,"PRECURSOR_GEAR",2000000,14,14,1),//precgear
+        ItemDrop(0.59,1.0,"ENCHANTED_BOOK-ULTIMATE_ONE_FOR_ALL-1",2000000,29,29,1),//ofa
+        ItemDrop(0.0,0.3,"ENCHANTED_BOOK-THUNDERLORD-7",2000000,100,20,1),//TL7
+        ItemDrop(9.91,11.52,"ENCHANTED_BOOK-ULTIMATE_SOUL_EATER-1",2000000,18,18,1),//SE
+        ItemDrop(0.0,0.0,null,2000000,12,12,2),//combo2/npng
+        ItemDrop(0.0,0.0,null,2000000,10,10,6),//LS,UltJ,Bank,Rej3,wis,ultW
+        ItemDrop(0.0,0.0,null,2000000,8,8,2),//iq/ff7
+        ItemDrop(0.32,0.3,null, 2000000, 6, 6, 3),//FISH*/
+    )
+
     override fun getCommandUsage(player: EntityPlayerSP): String =
         "/kismetprofit (master)"
 
     override fun processCommand(player: EntityPlayerSP, args: Array<String>) {
-        data class ItemDrop(val normalChance: Double, val masterChance: Double, val skyblockItemID: String, val chestPrice: Int)
-
-        val seventhLoot = listOf(
-            ItemDrop(0.54, 0.89, "AUTO_RECOMBOBULATOR", 10000000),
-            ItemDrop(0.13, 0.18, "IMPLOSION_SCROLL", 50000000),
-            ItemDrop(0.13, 0.18, "SHADOW_WARP_SCROLL", 50000000),
-            ItemDrop(0.13, 0.18, "WITHER_SHIELD_SCROLL", 50000000),
-            ItemDrop(0.1, 0.13, "NECRON_HANDLE", 100000000),
-            ItemDrop(4.29, 6.73, "RECOMBOBULATOR_3000", 6000000),
-            ItemDrop(6.3, 7.0, "WITHER_BOOTS", 2500000),
-            ItemDrop(3.43, 4.31, "WITHER_LEGGINGS", 6000000),
-            ItemDrop(0.53, 0.95, "WITHER_CHESTPLATE", 10000000),
-            ItemDrop(5.95, 6.73, "WITHER_HELMET", 4000000),
-            ItemDrop(0.0, 0.08, "DARK_CLAYMORE", 150000000),
-            ItemDrop(0.0, 0.33, "FIFTH_MASTER_STAR", 9000000),
-            ItemDrop(0.0, 0.04, "NECRON_DYE", 10000000),
-            ItemDrop(0.0, 0.33, "MASTER_SKULL_TIER_5", 32000000)
-        )
 
         var averageDropProfit = 0.0
 

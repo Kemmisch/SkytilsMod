@@ -425,7 +425,7 @@ object ScoreCalculation {
     }
 
     init {
-        tickTimer(5, repeats = true) {
+        tickTimer(200, repeats = true) {
             isEZPZ.set(
                 (MayorInfo.currentMayor == "Paul" && MayorInfo.mayorPerks.contains("EZPZ")) || MayorInfo.jerryMayor?.name == "Paul"
             )

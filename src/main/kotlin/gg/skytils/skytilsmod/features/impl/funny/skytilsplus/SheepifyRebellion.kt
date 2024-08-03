@@ -18,6 +18,7 @@
 
 package gg.skytils.skytilsmod.features.impl.funny.skytilsplus
 
+import gg.skytils.skytilsmod.Skytils.Companion
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorEntity
@@ -81,9 +82,9 @@ object SheepifyRebellion {
 
     @SubscribeEvent
     fun playerSpawn(event: EntityJoinWorldEvent) {
-        if (event.entity !is AbstractClientPlayer || event.entity.uniqueID.version() == 2) return
+        if ((event.entity !is AbstractClientPlayer && event.entity != mc.thePlayer) || event.entity.uniqueID.version() == 2) return
 
-        if (Utils.inSkyblock) {
+        if (Utils.isOnHypixel/*Utils.inSkyblock*/) {
             checkForFakeModel(event.entity as AbstractClientPlayer)
         } else if (event.entity is EntityPlayerSP) {
             val world = event.world
@@ -107,6 +108,11 @@ object SheepifyRebellion {
     @SubscribeEvent
     fun onWorldUnload(event: WorldEvent.Unload) {
         dummyModelMap.clear()
+    }
+
+    @SubscribeEvent
+    fun onJoin(event: WorldEvent.Load) {
+        if (mc.thePlayer in dummyModelMap) dummyModelMap.remove(mc.thePlayer)
     }
 
     @SubscribeEvent
@@ -204,7 +210,7 @@ object SheepifyRebellion {
         }
 
         if (entity is EntityTameable) {
-            entity.isSitting = originalEntity.isSneaking && !originalEntity.hasMoved
+            entity.isSitting = originalEntity.isSneaking// && !originalEntity.hasMoved
         } else {
             entity.isSneaking = originalEntity.isSneaking
         }

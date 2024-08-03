@@ -675,6 +675,35 @@ object Config : Vigilant(
     var dungeonSecretDisplay = false
 
     @Property(
+        type = PropertyType.SWITCH, name = "Blessing Level Display",
+        description = "Shows the level of each blessing you have in the current run.",
+        category = "Dungeons", subcategory = "Quality of Life"
+    )
+    var blessingLevelDisplay = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Blessing Level Display Format",
+        description = "Displayed with names on separate lines, or in one line.",
+        category = "Dungeons", subcategory = "Quality of Life"
+    )
+    var blessingLevelDisplayFormat = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Blessing Level Display Equivalents",
+        description = "Shows the equivalent level of each blessing you have in the current run.",
+        category = "Dungeons", subcategory = "Quality of Life"
+    )
+    var blessingLevelDisplayEquivalent = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Only Display Power",
+        description = "Only shows the equivalent power level.",
+        category = "Dungeons", subcategory = "Quality of Life",
+        searchTags = ["Blessing"]
+    )
+    var blessingLevelPowerEquivalent = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Ghost Leap Names",
         description = "Shows names next to the heads on the Ghost Leap menu.",
         category = "Dungeons", subcategory = "Quality of Life",
@@ -1142,13 +1171,23 @@ object Config : Vigilant(
 
     @Property(
         type = PropertyType.SWITCH, name = "Boulder Solver",
-        description = "§b[WIP] §rShow which boxes to move on the Boulder puzzle.",
+        description = "Show which boxes to move on the Boulder puzzle.",
         category = "Dungeons", subcategory = "Solvers",
         i18nName = "skytils.config.dungeons.solvers.boulder_solver",
         i18nCategory = "skytils.config.dungeons",
         i18nSubcategory = "skytils.config.dungeons.solvers"
     )
     var boulderSolver = false
+
+    @Property(
+        type = PropertyType.COLOR, name = "Boulder Solver Color",
+        description = "Color of the box that shows which button to click in the Boulder puzzle.",
+        category = "Dungeons", subcategory = "Solvers",
+        i18nName = "skytils.config.dungeons.solvers.boulder_solver_color",
+        i18nCategory = "skytils.config.dungeons",
+        i18nSubcategory = "skytils.config.dungeons.solvers"
+    )
+    var boulderSolverColor = Color(255, 0, 0, 255)
 
     @Property(
         type = PropertyType.SWITCH, name = "Creeper Beams Solver",
@@ -1192,7 +1231,7 @@ object Config : Vigilant(
 
     @Property(
         type = PropertyType.COLOR, name = "Teleport Maze Solver Color",
-        description = "Color of the thing that shows which pads you've stepped on in the Teleport Maze puzzle.",
+        description = "Color of the box that shows which pads you've stepped on in the Teleport Maze puzzle.",
         category = "Dungeons", subcategory = "Solvers",
         i18nName = "skytils.config.dungeons.solvers.teleport_maze_solver_color",
         i18nCategory = "skytils.config.dungeons",
@@ -1211,8 +1250,18 @@ object Config : Vigilant(
     var threeWeirdosSolver = false
 
     @Property(
+        type = PropertyType.COLOR, name = "Three Weirdos Solver Color",
+        description = "Color of the chest to click on the Three Weirdos puzzle.",
+        category = "Dungeons", subcategory = "Solvers",
+        i18nName = "skytils.config.dungeons.solvers.three_weirdos_solver_color",
+        i18nCategory = "skytils.config.dungeons",
+        i18nSubcategory = "skytils.config.dungeons.solvers"
+    )
+    var threeWeirdosSolverColor = Color(255, 0, 0, 255)
+
+    @Property(
         type = PropertyType.SWITCH, name = "Tic Tac Toe Solver",
-        description = "§b[WIP] §rDisplays the best move on the Tic Tac Toe puzzle.",
+        description = "Displays the best move on the Tic Tac Toe puzzle.",
         category = "Dungeons", subcategory = "Solvers",
         i18nName = "skytils.config.dungeons.solvers.tic_tac_toe_solver",
         i18nCategory = "skytils.config.dungeons",
@@ -1222,7 +1271,7 @@ object Config : Vigilant(
 
     @Property(
         type = PropertyType.COLOR, name = "Tic Tac Toe Solver Color",
-        description = "Color of the thing that displays the best move on the Tic Tac Toe puzzle.",
+        description = "Color of the outline that displays the best move on the Tic Tac Toe puzzle.",
         category = "Dungeons", subcategory = "Solvers",
         i18nName = "skytils.config.dungeons.solvers.tic_tac_toe_solver_color",
         i18nCategory = "skytils.config.dungeons",
@@ -1263,7 +1312,7 @@ object Config : Vigilant(
     @Property(
         type = PropertyType.SELECTOR, name = "Type of Livid Finder",
         category = "Dungeons", subcategory = "Solvers",
-        options = ["Block Change (NEW)", "Static Block"],
+        options = ["Block Change (NEW)", "Static Block","Fast Block Change?"],
         i18nName = "skytils.config.dungeons.solvers.type_of_livid_finder",
         i18nCategory = "skytils.config.dungeons",
         i18nSubcategory = "skytils.config.dungeons.solvers"
@@ -2284,6 +2333,30 @@ object Config : Vigilant(
         i18nSubcategory = "skytils.config.miscellaneous.items"
     )
     var highlightFilledBazaarOrders = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Confirm Overpriced Instant Buys",
+        description = "Requires confirmation for instant buys a % above normal price or above an amount. Press alt whilst clicking to bypass.",
+        category = "Miscellaneous", subcategory = "Items",
+        searchTags = ["Protect","Confirm","Instant"]
+    )
+    var confirmInstantBuy = false
+
+    @Property(
+        type = PropertyType.TEXT, name = "Confirm Instant Buys Above Value",
+        description = "Requires confirmation to use instant buys above this value.",
+        category = "Miscellaneous", subcategory = "Items",
+        searchTags = ["Protect","Confirm","Instant"]
+    )
+    var confirmInstantBuyAbove = "0"
+
+    @Property(
+        type = PropertyType.TEXT, name = "Confirm Instant Buys Above Item Value Percentage",
+        description = "Requires confirmation to instant buy items a % above item value. Requires fetch lowest bin prices to be on.",
+        category = "Miscellaneous", subcategory = "Items",
+        searchTags = ["Protect","Confirm","Instant"]
+    )
+    var confirmInstantBuyPercent = "0"
 
     @Property(
         type = PropertyType.SWITCH, name = "Item Cooldown Display",
@@ -4484,6 +4557,8 @@ object Config : Vigilant(
         addDependency("itemRarityOpacity", "showItemRarity")
         addDependency("itemRarityShape", "showItemRarity")
         addDependency("showPetRarity", "showItemRarity")
+        addDependency("confirmInstantBuyAbove", "confirmInstantBuy")
+        addDependency("confirmInstantBuyPercent", "confirmInstantBuy")
 
         arrayOf(
             "showLowestBINPrice",
@@ -4527,6 +4602,10 @@ object Config : Vigilant(
         addDependency("boxStarredMobsColor", "boxStarredMobs")
 
         addDependency("highlightDoorOpener", "spiritLeapNames")
+
+        addDependency("blessingLevelDisplayFormat","blessingLevelDisplay")
+        addDependency("blessingLevelDisplayEquivalent","blessingLevelDisplay")
+        addDependency("blessingLevelPowerEquivalent","blessingLevelDisplayEquivalent")
 
         addDependency("showNextBlaze", "blazeSolver")
         addDependency("lineToNextBlaze", "showNextBlaze")

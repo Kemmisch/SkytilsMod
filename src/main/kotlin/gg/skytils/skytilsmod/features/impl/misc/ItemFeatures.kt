@@ -212,6 +212,7 @@ object ItemFeatures {
                 if (Skytils.config.highlightDungeonSellableItems) {
                     if (event.slot.hasStack) {
                         val stack = event.slot.stack
+
                         if (stack.displayName.containsAny(
                                 "Defuse Kit",
                                 "Lever",
@@ -223,9 +224,15 @@ object ItemFeatures {
                                 "Mimic Fragment",
                                 "Healing 8 Splash Potion",
                                 "Healing VIII Splash Potion",
-                                "Premium Flesh"
+                                "Premium Flesh",
+                                "Beating Heart"
                             )
-                        ) event.slot highlight Color(255, 50, 150, 255)
+                        ) event.slot highlight Color(255, 50, 150, 255) else {
+                            val id = getSkyBlockItemID(getExtraAttributes(stack) ?: return) ?: return
+                            if (id == "DUNGEON_LORE_PAPER") event.slot highlight Color(255, 50, 150, 255)
+                        }
+
+
                     }
                 }
             }

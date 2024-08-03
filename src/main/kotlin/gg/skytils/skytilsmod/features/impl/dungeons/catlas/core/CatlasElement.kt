@@ -194,7 +194,7 @@ object CatlasElement : GuiElement(name = "Dungeon Map", x = 0, y = 0) {
                 ) || CatlasConfig.mapRoomNames == 2 && Utils.equalsOneOf(
                     roomType,
                     RoomType.RARE
-                )
+                ) || (room.data.name.contains("admin",true) && CatlasConfig.mapRoomNames == 2)
             ) {
                 name.addAll(room.data.name.split(" "))
             }
