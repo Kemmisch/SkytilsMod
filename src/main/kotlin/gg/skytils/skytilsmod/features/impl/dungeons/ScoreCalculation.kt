@@ -345,7 +345,42 @@ object ScoreCalculation {
         Utils.checkThreadAndQueue {
             ScoreCalculationElement.text.clear()
             if (!Utils.inDungeons) return@checkThreadAndQueue
-            if (Skytils.config.showDungeonStatus) {
+            if (Skytils.config.showDungeonStatus == 1) {
+                val secretsText = if (totalSecrets.get() == 0) {
+                    "§7?"
+                } else {
+                    val found = foundSecrets.get()
+                    (if (found == totalSecrets.get()) {
+                        "§a"
+                    } else if (found >= minSecrets.get()) {
+                        "§e"
+                    } else {
+                        "§c"
+                    }) + found + "§7/§a§7" + totalSecrets.get() + "s, §emin: " + when (val sec = minSecrets.get()) {
+                        -1 -> "§7?"
+                        -2 -> "§c✘"
+                        -3 -> "§a✔"
+                        else -> "§a${(sec - found).takeUnless { it <= 0 } ?: "✔"}"
+                    }
+                }
+                ScoreCalculationElement.text.add("$rank $score ${if ((dungeonFloorNumber ?: 0) >= 6) {
+                    if (mimicKilled.get()) {
+                        "§a✔"
+                    } else {
+                        "§c✘"
+                    }
+                } else {
+                    "§7-"
+                }}")
+                ScoreCalculationElement.text.add(secretsText)
+                ScoreCalculationElement.text.add("${if (completedPuzzleCount == puzzleCount) {
+                    "§a"
+                } else if (failedPuzzles.get() > 0) {
+                    "§c"
+                } else {
+                    "§e"
+                }}$completedPuzzleCount§7/§a${puzzleCount}§7p-${if (crypts.get() < 5 ) "§c" else "§a"}${crypts.get()}c§7-${if (deaths.get() == 0) "§a" else "§c"}${deaths.get()}☠")
+            } else if (Skytils.config.showDungeonStatus == 2) {
                 ScoreCalculationElement.text.add("§9Dungeon Status")
                 ScoreCalculationElement.text.add("• §eDeaths: ${if (deaths.get() == 0) {
                     "§a"
@@ -424,7 +459,7 @@ object ScoreCalculation {
                     score < 300 -> 'e'
                     else -> 'a'
                 }
-                ScoreCalculationElement.text.add("• §6Dungeon Score: §$color$score §7($rank§7)")
+                if (Skytils.config.showDungeonStatus != 1) ScoreCalculationElement.text.add("• §6Dungeon Score: §$color$score §7($rank§7)")
             }
         }
     }
@@ -596,7 +631,7 @@ object ScoreCalculation {
                 it as AccessorChatComponentText
                 if (it.text.startsWith("Skytils-SC > ")) {
                     it.text = it.text.substringAfter("Skytils-SC > ")
-                } else if (it.text.startsWith("\$SKYTILS-DUNGEON-SCORE-MIMIC\$")) {
+                } else if (it.text.contains("\$SKYTILS-DUNGEON-SCORE-MIMIC\$")) {
                     it.text = it.text.replace("\$SKYTILS-DUNGEON-SCORE-MIMIC\$", "Mimic Killed!")
                 }
             }
@@ -674,7 +709,7 @@ object ScoreCalculation {
         }
 
         override fun demoRender() {
-            if (Skytils.config.showDungeonStatus) {
+            if (Skytils.config.showDungeonStatus > 0) {
                 RenderUtil.drawAllInList(this, demoStatus + if (Skytils.config.showScoreBreakdown) demoScore else demoMin)
             } else {
                 RenderUtil.drawAllInList(this, if (Skytils.config.showScoreBreakdown) demoScore else demoMin)
@@ -691,7 +726,7 @@ object ScoreCalculation {
                 "• §eMimic:§l§a ✔",
                 ""
             )
-            private val demoScore = listOf(
+            private val demoScore = if (Skytils.config.showDungeonStatus == 2) listOf(
                 "§6Dungeon Score",
                 "• §eSkill Score:§a 100",
                 "• §eExplore Score:§a 100 §7(§e60 §7+ §640§7)",
@@ -699,14 +734,20 @@ object ScoreCalculation {
                 "• §eBonus Score:§a 17",
                 "• §eTotal Score:§a 317 §7(§6+10§7)",
                 "• §eRank: §6§lS+",
+            ) else listOf(
+                "§6S 298 §r§c✘",
+                "§c12/§654s§7, §3min12, skip20",
+                "3/4p - 34c - 3☠ (-5)"
             )
             private val demoMin = listOf("• §6Dungeon Score: §a 300 §7(§6§lS+§7)")
             val text = ArrayList<String>()
         }
 
         override val height: Int
-            get() = (if (Skytils.config.showDungeonStatus) {
+            get() = (if (Skytils.config.showDungeonStatus == 2) {
                 7
+            } else if (Skytils.config.showDungeonStatus == 1) {
+                3
             } else {
                 0
             } + if (Skytils.config.showScoreBreakdown) {
@@ -715,7 +756,7 @@ object ScoreCalculation {
                 1
             }) * ScreenRenderer.fontRenderer.FONT_HEIGHT
         override val width: Int
-            get() = (if (Skytils.config.showDungeonStatus) {
+            get() = (if (Skytils.config.showDungeonStatus > 0) {
                 demoStatus
             } else {
                 emptyList()

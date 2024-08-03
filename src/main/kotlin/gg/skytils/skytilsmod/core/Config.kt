@@ -449,11 +449,12 @@ object Config : Vigilant(
     var showScoreCalculation = false
 
     @Property(
-        type = PropertyType.SWITCH, name = "Show Dungeon Status",
+        type = PropertyType.SELECTOR, name = "Show Dungeon Status",
         description = "Shows information about the current dungeon run that affects its score.",
+        options = ["Off","Minimised","Full"],
         category = "Dungeons", subcategory = "Score Calculation"
     )
-    var showDungeonStatus = false
+    var showDungeonStatus = 0
 
     @Property(
         type = PropertyType.SWITCH, name = "Dungeon Score Breakdown",

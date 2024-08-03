@@ -754,6 +754,7 @@ object DungeonFeatures {
                 val color = when (secrets / maxSecrets.toDouble()) {
                     in 0.0..0.5 -> CommonColors.RED
                     in 0.5..0.75 -> CommonColors.YELLOW
+                    1.0 -> CommonColors.LIGHT_GREEN
                     else -> CommonColors.GREEN
                 }
 

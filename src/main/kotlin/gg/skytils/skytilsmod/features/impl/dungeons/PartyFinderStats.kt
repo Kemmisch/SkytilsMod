@@ -58,7 +58,7 @@ object PartyFinderStats {
             val username = match.groups["name"]?.value ?: return
             if (username == mc.thePlayer.name) return
             event.isCanceled = true
-            val joinText = UMessage(event.message.formattedText).append(
+            UMessage(event.message.formattedText).append(
                 UTextComponent("\n§c§l[KICK]\n").setHoverText("§cClick to kick ${username}§c.")
                     .setClick(ClickEvent.Action.RUN_COMMAND, "/p kick $username")
             ).chat()
@@ -168,6 +168,12 @@ object PartyFinderStats {
                                     itemIds.contains("SHADOW_FURY") -> add("§8Shadow Fury")
                                     itemIds.contains("FLOWER_OF_TRUTH") -> add("§cFoT")
                                 }
+                                //Tank/Healer
+                                when {
+                                    itemIds.contains("GLOOMLOCK_GRIMOIRE") -> add("§5Gloomlock")
+                                    itemIds.contains("TRIBAL_SPEAR") -> add("§6Tribal Spear")
+                                    itemIds.contains("LAST_BREATH") -> add("§6Last Breath")
+                                }
                                 //Miscellaneous
                                 add(checkItemId(itemIds, "GYROKINETIC_WAND", "§5Gyro"))
                                 add(checkItemId(itemIds, "DARK_CLAYMORE", "§7Claymore"))
@@ -176,6 +182,7 @@ object PartyFinderStats {
                                 checkStonk(itemIds, extraAttribs)?.run { add(this) }
                                 add(checkItemId(itemIds, "BONZO_STAFF", "§9Bonzo Staff"))
                                 add(checkItemId(itemIds, "JERRY_STAFF", "§eJerry-chine"))
+                                add(checkItemId(itemIds, "FIRE_FREEZE_STAFF", "§4Fire Freeze"))
 
                                 remove(null)
                             }
@@ -309,7 +316,7 @@ object PartyFinderStats {
     private fun checkStonk(items: Set<String?>, tags: Set<NBTTagCompound?>): String? {
         val eff = tags.mapNotNull { it?.getCompoundTag("enchantments")?.getInteger("efficiency") }.maxOrNull() ?: 0
         return when {
-            eff >= 7 -> "§6Efficiency ${eff.toRoman()}"
+            eff >= 7 -> "§6Eff ${eff.toRoman()}"
             items.contains("STONK") -> "§6Stonk"
             else -> null
         }
