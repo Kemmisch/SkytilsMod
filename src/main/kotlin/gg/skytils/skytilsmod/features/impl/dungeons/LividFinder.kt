@@ -42,6 +42,7 @@ import net.minecraft.util.BlockPos
 import net.minecraft.util.EnumChatFormatting
 import net.minecraft.world.World
 import net.minecraftforge.client.event.RenderLivingEvent
+import net.minecraftforge.event.entity.EntityJoinWorldEvent
 import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import net.minecraftforge.fml.common.gameevent.TickEvent
@@ -54,6 +55,39 @@ object LividFinder {
     private var lividTag: Entity? = null
     private var lividJob: Job? = null
     private val lividBlock = BlockPos(13, 107, 25)
+    private var lividColor: EnumDyeColor? = null
+
+    @SubscribeEvent
+    fun onEntityJoin(event: EntityJoinWorldEvent) {
+        if (mc.thePlayer == null || !Utils.inDungeons || DungeonFeatures.dungeonFloorNumber != 5 || !DungeonFeatures.hasBossSpawned || !Skytils.config.findCorrectLivid) return
+        if (Skytils.config.lividFinderType != 2 || lividColor == null || event.entity !is EntityArmorStand) return
+        val (mapped, other) = getLividColors(lividColor?:return)
+        val fallBackColor = event.entity.name.startsWith("$other﴾ $other§lLivid")
+        if ((mapped != null && event.entity.name.startsWith("$mapped﴾ $mapped§lLivid")) || fallBackColor) {
+            if (fallBackColor && !(mapped != null && event.entity.name.startsWith("$mapped﴾ $mapped§lLivid"))) {
+                UChat.chat("§bBlock color ${mapped?.name ?: "INVALID MAPPED COLOR"} should be mapped to ${other}${other.name}§b. Please report this to discord.gg/skytils")
+            }
+            lividTag = event.entity
+            val aabb = AxisAlignedBB(
+                lividTag!!.posX - 0.6,
+                lividTag!!.posY - 2.1,
+                lividTag!!.posZ - 0.6,
+                lividTag!!.posX + 0.6,
+                lividTag!!.posY + 0.1,
+                lividTag!!.posZ + 0.6
+            )
+            livid = mc.theWorld.loadedEntityList.find {
+                val coll = it.entityBoundingBox ?: return@find false
+                return@find it is EntityOtherPlayerMP && it.name.endsWith(" Livid") && aabb.isVecInside(
+                    coll.minVec
+                ) && aabb.isVecInside(
+                    coll.maxVec
+                )
+            }
+            foundLivid = true
+            return
+        }
+    }
 
     @SubscribeEvent
     fun onTick(event: ClientTickEvent) {
@@ -62,10 +96,7 @@ object LividFinder {
         if (Skytils.config.lividFinderType == 1 && !foundLivid && mc.thePlayer.isPotionActive(Potion.blindness)) {
             if (lividJob == null || lividJob?.isCancelled == true || lividJob?.isCompleted == true) {
                 printDevMessage("Starting livid job", "livid")
-                lividJob = Skytils.launch {
-                    while (mc.thePlayer.isPotionActive(Potion.blindness)) {
-                        delay(1)
-                    }
+                lividJob = Skytils.launch { while (mc.thePlayer.isPotionActive(Potion.blindness)) { delay(1) }
                     val state = mc.theWorld.getBlockState(lividBlock)
                     val color = state.getValue(BlockStainedGlass.COLOR)
                     val (a, otherColor) = getLividColors(color)
@@ -84,15 +115,19 @@ object LividFinder {
         if (mc.thePlayer == null || !Utils.inDungeons || DungeonFeatures.dungeonFloorNumber != 5 || !DungeonFeatures.hasBossSpawned || !Skytils.config.findCorrectLivid) return
         if (event.pos == lividBlock) {
             printDevMessage("Livid block changed", "livid")
-            if (Skytils.config.lividFinderType == 0) {
+            if (Skytils.config.lividFinderType in setOf(0,2)) {
                 printDevMessage("block detection started", "livid")
-                val color = event.update.getValue(BlockStainedGlass.COLOR)
-                val (mapped, other) = getLividColors(color)
+                lividColor = event.update.getValue(BlockStainedGlass.COLOR)
+                val (mapped, other) = getLividColors(lividColor?:return)
+                if (Skytils.config.lividFinderType == 0) {
                 Skytils.launch {
                     while (mc.thePlayer.isPotionActive(Potion.blindness)) {
                         delay(1)
                     }
-                    getLivid(color, mapped, other)
+                    getLivid(lividColor?: return@launch, mapped, other)
+                } } else {
+                    //getLivid(lividColor?:return, mapped, other)
+                    UChat.chat("${mapped}Block found - $lividColor")
                 }
                 printDevMessage("block detection done", "livid")
             }
