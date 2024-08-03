@@ -21,6 +21,7 @@ import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.features.impl.dungeons.WitherKingDragons
 import gg.skytils.skytilsmod.utils.SuperSecretSettings
 import gg.skytils.skytilsmod.utils.Utils
+import net.minecraft.client.entity.AbstractClientPlayer
 import net.minecraft.client.entity.EntityPlayerSP
 import net.minecraft.entity.EntityLivingBase
 import net.minecraft.entity.player.EntityPlayer
@@ -50,7 +51,12 @@ class EntityLivingBaseHook(val entity: EntityLivingBase) {
     }
 
     val isSmol by lazy {
-        Utils.inSkyblock && entity is EntityPlayer && (SuperSecretSettings.smolPeople || isBreefing)
+        if (!SuperSecretSettings.catGaming) {
+            Utils.inSkyblock && entity is EntityPlayer && (SuperSecretSettings.smolPeople || isBreefing)
+        } else {
+            Utils.isOnHypixel && entity is AbstractClientPlayer && entity.uniqueID.version() != 2 && (SuperSecretSettings.smolPeople || isBreefing)
+        }
+
     }
 
     fun modifyPotionActive(potionId: Int, cir: CallbackInfoReturnable<Boolean>) {

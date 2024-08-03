@@ -129,7 +129,7 @@ object SheepifyRebellion {
         var fakeEntity: EntityLivingBase? = null
         if (SuperSecretSettings.catGaming) {
             fakeEntity = EntityOcelot(fakeWorld)
-            fakeEntity.tameSkin = 3
+            fakeEntity.tameSkin = 1
         } else if (SuperSecretSettings.palworld) {
             val uuid = entity.uniqueID
             val most = abs(uuid.mostSignificantBits)
