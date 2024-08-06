@@ -75,11 +75,11 @@ object QuickWarp {
 
 
     fun pushWarp(newWarp: Warp) {
-        if (ReasonPriorities.comparePriorities(
-                newWarp.reason,
-                currentWarp?.reason ?: "lowest"
-            ) && newWarp.validMode == (SBInfo.mode ?: return)
-        )
+        //if (ReasonPriorities.comparePriorities(
+        //        newWarp.reason,
+        //        currentWarp?.reason ?: "lowest"
+        //   ) && newWarp.validMode == (SBInfo.mode ?: return)
+        //)
             currentWarp = newWarp
 
     }
@@ -148,7 +148,7 @@ object QuickWarp {
         override val height: Int
             get() = ScreenRenderer.fontRenderer.FONT_HEIGHT
         override val width: Int
-            get() = ScreenRenderer.fontRenderer.getStringWidth("§6Quick Warp: Dark Auction")
+            get() = ScreenRenderer.fontRenderer.getStringWidth("§6Quick Warp§f: §eDesert Settlement")
 
         override val toggled: Boolean
             get() = (Skytils.config.gardenQuickWarp || Skytils.config.trapperQuickWarp || Skytils.config.inquisitorQuickWarp || Skytils.config.burrowEstimationQuickWarp)

@@ -99,7 +99,7 @@ object FarmingFeatures {
 
             val mobMatch = trevorRegex.find(formatted)
             if (mobMatch != null) {
-
+                //UChat.chat("Mob Found.")
                 timeAlive = System.currentTimeMillis()
                 animalFound = false
 
@@ -118,8 +118,10 @@ object FarmingFeatures {
                     animalLocation = mobMatch.groups["location"]!!.value
                     if (animalLocation == "Desert Settlement") {
                         QuickWarp.pushWarp(QuickWarp.Warp("desert","farming_1",System.currentTimeMillis(),5000,"desert","§eDesert Settlement"))
+                        //UChat.chat("Warp pushed. - settlement")
                     } else if (animalLocation == "Oasis") {
                         QuickWarp.pushWarp(QuickWarp.Warp("desert","farming_1",System.currentTimeMillis(),10000,"desert","§bOasis"))
+                        //UChat.chat("Warp pushed. - oasis")
                     }
                 }
             }
@@ -148,6 +150,7 @@ object FarmingFeatures {
 
                 if (Skytils.config.trapperQuickWarp) {
                     QuickWarp.pushWarp(QuickWarp.Warp("trapper","farming_1",System.currentTimeMillis(),5000,"trevor","§2Trevor"))
+                    //UChat.chat("Warp pushed. - trevor")
                 }
 
                 animalFound = true
