@@ -47,11 +47,11 @@ object GardenFeatures {
     private val scythes = hashMapOf("SAM_SCYTHE" to 1, "GARDEN_SCYTHE" to 2)
 
     // Only up to 1 visitor can spawn if the player is offline or out of the garden, following the same timer.
-    private val visitorCount = Regex("^\\s*§r§b§lVisitors: §r§f\\((?<visitors>\\d+)\\)§r\$")
-    private val nextVisitor = Regex("\\s*§r Next Visitor: §r§b(?:(?<min>\\d+)m )?(?<sec>\\d+)s§r")
+    //private val visitorCount = Regex("^\\s*§r§b§lVisitors: §r§f\\((?<visitors>\\d+)\\)§r\$")
+    //private val nextVisitor = Regex("\\s*§r Next Visitor: §r§b(?:(?<min>\\d+)m )?(?<sec>\\d+)s§r")
     private val newVisitorRegex = Regex("^(.+) has arrived on your Garden!\$")
-    private var nextVisitorAt = -1L
-    private var lastKnownVisitorCount = 0
+    //private var nextVisitorAt = -1L
+    //private var lastKnownVisitorCount = 0
 
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     fun onChat(event: ClientChatReceivedEvent) {
