@@ -132,7 +132,7 @@ object DungeonChestProfit {
                     val value = if (drop.contains("Essence")) {
                         getEssenceValue(drop) ?: return@forEach
                     } else {
-                        AuctionData.lowestBINs[(getIdFromName(drop))] ?: 0.0
+                        if (getIdFromName(drop) in ignoreItems) 0.0 else AuctionData.lowestBINs[getIdFromName(drop)] ?: 0.0
                     }
                     chestType.value += value
                 }
@@ -150,7 +150,7 @@ object DungeonChestProfit {
         val stack = event.slot.stack ?: return
         if (stack.item == Items.skull) {
             val name = stack.displayName
-            if (!(name == "§cThe Catacombs" || name == "§cMaster Mode Catacombs")) return
+            if (!(name == "§cThe Catacombs" || name == "§cMaster Mode The Catacombs")) return
             val lore = ItemUtil.getItemLore(stack)
             event.slot highlight when {
                 lore.any { line -> line == "§aNo more Chests to open!" } -> {
