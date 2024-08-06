@@ -102,6 +102,8 @@ object MiscFeatures {
     )
     private val hubSpawnPoint = BlockPos(-2, 70, -69)
     private val bestiaryTitleRegex = Regex("(?:\\(\\d+/\\d+\\) )?(?:Bestiary ➜ (?!Fishing)|Fishing ➜ )|Search Results")
+    private val petDropRegex = Regex("§r§6§lPET DROP! §r§(?<rarity>.)(?<pet>[^§]*) §r§b\\(\\+§r§b(?<magicfind>\\d*)% §r§b✯ Magic Find§r§b\\)§r")
+    private val rarityMap = mapOf<String,String>("f" to "COMMON", "a" to "UNCOMMON", "9" to "RARE", "5" to "EPIC", "6" to "LEGENDARY", "d" to "MYTHIC")
 
     init {
         GolemSpawnTimerElement()
@@ -153,6 +155,19 @@ object MiscFeatures {
         }
         if (unformatted == "The ground begins to shake as an Endstone Protector rises from below!") {
             golemSpawnTime = System.currentTimeMillis() + 20000
+        }
+//PET DROP! §PET DROP! Enderman (+311% ✯ Magic Find)EPIC5  \(\+Enderman% ✯ Magic Find\)
+        if (Skytils.config.petRarityMessage) {
+            if (formatted.matches(petDropRegex)) {
+                val text = petDropRegex.find(formatted) ?: return
+                val rarity = text.groups.get("rarity")?.value
+                val pet = text.groups.get("pet")?.value
+                val magicfind = text.groups.get("magicfind")?.value
+                val msg = "§r§6§lPET DROP! §r§${rarity}${rarityMap[rarity]} $pet §r§b(+§r§b${magicfind}% §r§b✯ Magic Find§r§b)§r"
+
+                event.isCanceled = true
+                UChat.chat(msg)
+            }
         }
 
         if (!Utils.inDungeons) {

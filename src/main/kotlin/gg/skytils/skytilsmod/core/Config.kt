@@ -2747,6 +2747,14 @@ object Config : Vigilant(
     var autoCopyVeryRareDrops = false
 
     @Property(
+        type = PropertyType.SWITCH, name = "Pet Rarity in Drop Message",
+        description = "Show the rarity of the dropped pet in the chat message",
+        category = "Miscellaneous", subcategory = "other"
+    )
+
+    var petRarityMessage = true
+
+    @Property(
         type = PropertyType.SWITCH, name = "Dupe Tracker",
         description = "Tries to track duplicated items on the auction house.\nThis will not catch every single duped item.",
         category = "Miscellaneous", subcategory = "Other",
