@@ -298,6 +298,7 @@ object FarmingFeatures {
         if (animalFound || !Utils.inSkyblock || SBInfo.mode != "farming_1" || !Skytils.config.trapperSolver || !event.entity.hasCustomName() || event.entity !is EntityArmorStand) return
         val entity = event.entity as EntityArmorStand
         val mobMatch = mobRegex.find(entity.customNameTag) ?: return
+        if (entity.isInvisible) animalType = null
         if ((mobMatch.groups.get("rarity")?.value
                 ?: return) != animalRarity || mobMatch.groups.get("type")?.value != (animalType
                 ?: mobMatch.groups.get("type")?.value) || !entity.customNameTag.containsAny("/","\\")
