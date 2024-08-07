@@ -18,6 +18,7 @@
 package gg.skytils.skytilsmod.features.impl.dungeons
 
 import gg.essential.api.EssentialAPI
+import gg.essential.universal.UChat
 import gg.essential.universal.UResolution
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
@@ -53,7 +54,7 @@ object DungeonChestProfit {
     private val element = DungeonChestProfitElement()
     private var rerollBypass = false
     private val essenceRegex = Regex("§d(?<type>\\w+) Essence §8x(?<count>\\d+)")
-    private val croesusChestRegex = Regex("^(Master Mode|The)? Catacombs - Floor (IV|V?I{0,3})$")
+    private val croesusChestRegex = Regex("(Master Mode )?The Catacombs - Floo?(r ([IV]+))?")
     private val ignoreItems = setOf(
         "ENCHANTED_BOOK-INFINITE_QUIVER-6",
         "ENCHANTED_BOOK-INFINITE_QUIVER-7",
