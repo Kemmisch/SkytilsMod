@@ -30,6 +30,7 @@ import gg.skytils.skytilsmod.utils.Utils
 import gg.skytils.skytilsmod.utils.ifNull
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import net.minecraft.block.BlockChest
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.init.Blocks
 import net.minecraft.tileentity.TileEntityChest
@@ -58,9 +59,83 @@ object IceFillSolver {
                         player.posX, player.posY, player.posZ
                     ) < 750
                 }.firstNotNullOfOrNull { chest ->
-                    val pos = chest.pos
+                    var pos = chest.pos
+                    val rot = world.getBlockState(pos).getValue(BlockChest.FACING)
+                    if (
+                        world.getBlockState(pos.down()).block == Blocks.stone && world.getBlockState((pos.offset(rot,2))).block == Blocks.iron_bars &&
+                        world.getBlockState(pos.offset(rot.opposite)).block == Blocks.cobblestone &&
+                        world.getBlockState(pos.down(3).offset(rot,3)).block == Blocks.cobblestone_wall
+                    ) {
+                        pos = if (world.getBlockState(pos.offset(rot.rotateY())) == Blocks.torch) {
+                            pos.offset(rot.rotateYCCW())
+                        } else {
+                            pos.offset(rot.rotateY())
+                        }
 
-                    EnumFacing.HORIZONTALS.firstOrNull {
+                        val starts = Triple(
+                            //three: -33 70 -89
+                            pos.down(5).offset(rot, 22),
+                            //five: -28 71 -89
+                            pos.down(4).offset(rot, 17),
+                            //seven: -21 72 -89
+                            pos.down(3).offset(rot, 10),
+                        )
+                        val ends = Triple(
+                            //three: -29 70 -89
+                            starts.first.offset(rot.opposite, 3),
+                            //five: -23 71 -89
+                            starts.second.offset(rot.opposite, 5),
+                            //seven: -14 72 -89
+                            starts.third.offset(rot.opposite, 7),
+                        )
+
+                        puzzles = Triple(
+                            IceFillPuzzle(pos, world, starts.first, ends.first, rot.opposite),
+                            IceFillPuzzle(pos, world, starts.second, ends.second, rot.opposite),
+                            IceFillPuzzle(pos, world, starts.third, ends.third, rot.opposite)
+                        )
+                    }
+
+
+
+                    /*EnumFacing.HORIZONTALS.firstOrNull {
+                        world.getBlockState(pos.down()).block == Blocks.stone && world.getBlockState((pos.offset(it,2))).block == Blocks.iron_bars &&
+                                world.getBlockState(pos.offset(it.opposite)).block == Blocks.cobblestone &&
+                                world.getBlockState(pos.down(3).offset(it,3)).block == Blocks.cobblestone_wall
+                    }?.let {
+                        if (world.getBlockState(pos.offset(it.rotateY())).block == Blocks.torch) {
+                            pos.offset(it.rotateYCCW())
+                        } else if (world.getBlockState(pos.offset(it.rotateYCCW())).block == Blocks.torch) {
+                            pos.offset(it.rotateY())
+                        } else UChat.chat("Invalid chest @ $pos")
+
+                        val starts = Triple(
+                            //three: -33 70 -89
+                            pos.down(5).offset(it.opposite, 22),
+                            //five: -28 71 -89
+                            pos.down(4).offset(it.opposite, 17),
+                            //seven: -21 72 -89
+                            pos.down(3).offset(it.opposite, 10),
+                        )
+                        val ends = Triple(
+                            //three: -29 70 -89
+                            starts.first.offset(it, 3),
+                            //five: -23 71 -89
+                            starts.second.offset(it, 5),
+                            //seven: -14 72 -89
+                            starts.third.offset(it, 7),
+                        )
+
+                        puzzles = Triple(
+                            IceFillPuzzle(pos, world, starts.first, ends.first, it),
+                            IceFillPuzzle(pos, world, starts.second, ends.second, it),
+                            IceFillPuzzle(pos, world, starts.third, ends.third, it)
+                        )
+                    }*/
+
+
+
+                    /*EnumFacing.HORIZONTALS.firstOrNull {
                         world.getBlockState(pos.down()).block == Blocks.stone && world.getBlockState(pos.offset(it)).block == Blocks.cobblestone && world.getBlockState(
                             pos.offset(it.opposite, 2)
                         ).block == Blocks.iron_bars && world.getBlockState(
@@ -99,7 +174,7 @@ object IceFillSolver {
                             IceFillPuzzle(pos, world, starts.second, ends.second, it),
                             IceFillPuzzle(pos, world, starts.third, ends.third, it)
                         )
-                    }
+                    }*/
                 }
             }
         }
