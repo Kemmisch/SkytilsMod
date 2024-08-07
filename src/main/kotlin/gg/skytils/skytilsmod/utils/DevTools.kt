@@ -18,13 +18,42 @@
 
 package gg.skytils.skytilsmod.utils
 
+import codes.som.anthony.koffee.modifiers.varargs
 import gg.essential.universal.UChat
+import gg.skytils.skytilsmod.utils.SBInfo.lastOpenContainerName
+import net.minecraft.client.gui.GuiScreen
+import net.minecraft.client.settings.KeyBinding
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent
+import org.lwjgl.input.Keyboard
 
 object DevTools {
     val toggles = HashMap<String, Boolean>()
     var allToggle = false
         private set
+    var devKey = KeyBinding("Dev Tool", Keyboard.KEY_Y, "Skytils")
+    val validModes = listOf("containerName")
+    var mode = "containerName"
 
+
+    @SubscribeEvent
+    fun onInput(event: KeyInputEvent) {
+        val key = Keyboard.getEventKey()
+        if (key != devKey.keyCode || Keyboard.isRepeatEvent() || !devKey.isPressed) return
+        GuiScreen.setClipboardString(lastOpenContainerName.toString())
+        UChat.chat(lastOpenContainerName.toString())
+
+    }
+
+    fun setMode(args: Array<String>) {
+        if (args[2] in validModes) {
+            mode = args[2]
+            UChat.chat("Dev tool mode set to $mode")
+        } else {
+            UChat.chat("Invalid mode $mode")
+            UChat.chat("Valid modes are: ${validModes.toString()}")
+        }
+    }
 
     fun getToggle(toggle: String): Boolean {
         return if (allToggle) allToggle else toggles.getOrDefault(toggle.lowercase(), false)

@@ -293,7 +293,9 @@ class Skytils {
         guiManager = GuiManager
         jarFile = event.sourceFile
         mc.framebuffer.enableStencil()
-        ClientRegistry.registerKeyBinding(gg.skytils.skytilsmod.features.impl.misc.QuickWarp.keybindQuickWarp)
+        ClientRegistry.registerKeyBinding(devKey)
+        ClientRegistry.registerKeyBinding(keybindQuickWarp)
+
     }
 
     @Mod.EventHandler

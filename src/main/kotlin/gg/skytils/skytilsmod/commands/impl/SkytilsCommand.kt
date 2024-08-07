@@ -256,18 +256,22 @@ object SkytilsCommand : BaseCommand("skytils", listOf("st")) {
                     UChat.chat("$prefix §b/skytils dev <toggle>")
                     return
                 } else {
-                    DevTools.toggle(args[1])
-                    player.addChatMessage(
-                        ChatComponentText(
-                            "$successPrefix §c${
-                                args[1]
-                            } §awas toggled to: §6${
-                                if (DevTools.allToggle) "Overriden by all toggle to ${DevTools.allToggle}" else DevTools.getToggle(
+                    if (args[1] == "set") {
+                        DevTools.setMode(args)
+                    } else {
+                        DevTools.toggle(args[1])
+                        player.addChatMessage(
+                            ChatComponentText(
+                                "$successPrefix §c${
                                     args[1]
-                                )
-                            }"
+                                } §awas toggled to: §6${
+                                    if (DevTools.allToggle) "Overriden by all toggle to ${DevTools.allToggle}" else DevTools.getToggle(
+                                        args[1]
+                                    )
+                                }"
+                            )
                         )
-                    )
+                    }
                 }
             }
 
