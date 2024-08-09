@@ -446,7 +446,6 @@ class Skytils {
         cch.registerCommand(ItemCycleCommand)
         cch.registerCommand(JoinCommand)
         cch.registerCommand(KismetProfitCommand)
-        cch.registerCommand(LimboCommand)
         cch.registerCommand(OrderedWaypointCommand)
         cch.registerCommand(ScamCheckCommand)
         cch.registerCommand(SlayerCommand)

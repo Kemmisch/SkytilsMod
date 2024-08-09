@@ -54,7 +54,7 @@ object DungeonChestProfit {
     private val element = DungeonChestProfitElement()
     private var rerollBypass = false
     private val essenceRegex = Regex("§d(?<type>\\w+) Essence §8x(?<count>\\d+)")
-    private val croesusChestRegex = Regex("(Master Mode )?The Catacombs - Floo?(r ([IV]+))?")
+    private val croesusChestRegex = Regex("^(Master Mode )?The Catacombs - Flo(or (IV|V?I{0,3}))?$")
     private val ignoreItems = setOf(
         "ENCHANTED_BOOK-INFINITE_QUIVER-6",
         "ENCHANTED_BOOK-INFINITE_QUIVER-7",
