@@ -50,6 +50,7 @@ import gg.skytils.skytilsmod.features.impl.mining.CHWaypoints
 import gg.skytils.skytilsmod.features.impl.mining.MiningFeatures
 import gg.skytils.skytilsmod.features.impl.mining.StupidTreasureChestOpeningThing
 import gg.skytils.skytilsmod.features.impl.misc.*
+import gg.skytils.skytilsmod.features.impl.misc.QuickBind.quickBindKey
 import gg.skytils.skytilsmod.features.impl.misc.QuickWarp.keybindQuickWarp
 import gg.skytils.skytilsmod.features.impl.overlays.AuctionPriceOverlay
 import gg.skytils.skytilsmod.features.impl.protectitems.ProtectItems
@@ -76,6 +77,7 @@ import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorGuiStreamUnav
 import gg.skytils.skytilsmod.mixins.transformers.accessors.AccessorSettingsGui
 import gg.skytils.skytilsmod.tweaker.DependencyLoader
 import gg.skytils.skytilsmod.utils.*
+import gg.skytils.skytilsmod.utils.DevTools.devKey
 import gg.skytils.skytilsmod.utils.graphics.ScreenRenderer
 import gg.skytils.skytilsmod.utils.graphics.colors.CustomColor
 import gg.skytils.skytilsws.client.WSClient
@@ -295,6 +297,7 @@ class Skytils {
         mc.framebuffer.enableStencil()
         ClientRegistry.registerKeyBinding(devKey)
         ClientRegistry.registerKeyBinding(keybindQuickWarp)
+        ClientRegistry.registerKeyBinding(quickBindKey)
 
     }
 
@@ -377,6 +380,7 @@ class Skytils {
             PotionEffectTimers,
             PricePaid,
             ProtectItems,
+            QuickBind,
             QuickWarp,
             QuiverStuff,
             RainTimer,

@@ -32,6 +32,7 @@ import gg.skytils.skytilsmod.core.DataFetcher
 import gg.skytils.skytilsmod.core.PersistentSave
 import gg.skytils.skytilsmod.core.UpdateChecker
 import gg.skytils.skytilsmod.features.impl.dungeons.PartyFinderStats
+import gg.skytils.skytilsmod.features.impl.dungeons.PartyFinderStats.printStats
 import gg.skytils.skytilsmod.features.impl.dungeons.catlas.Catlas
 import gg.skytils.skytilsmod.features.impl.dungeons.catlas.core.CatlasConfig
 import gg.skytils.skytilsmod.features.impl.dungeons.catlas.handlers.DungeonInfo
@@ -315,9 +316,16 @@ object SkytilsCommand : BaseCommand("skytils", listOf("st")) {
             "notifications" -> Skytils.displayScreen = CustomNotificationsGui()
             "pv" -> {
                 if (args.size == 1) {
-                    Skytils.displayScreen =
-                        ProfileGui(mc.thePlayer.uniqueID, UPlayer.getPlayer()?.displayNameString ?: "")
+                    if (Skytils.config.pvMode == 1) {
+                        printStats(mc.thePlayer.name.toString(),withKick = false)
+                    } else {
+                        Skytils.displayScreen =
+                            ProfileGui(mc.thePlayer.uniqueID, UPlayer.getPlayer()?.displayNameString ?: "")
+                    }
                 } else {
+                    if (Skytils.config.pvMode == 1) {
+                        printStats(args[1],withKick = false)
+                    } else {
                     // TODO Add some kind of message indicating progress
                     Skytils.IO.launch {
                         runCatching {
@@ -329,6 +337,8 @@ object SkytilsCommand : BaseCommand("skytils", listOf("st")) {
                             Skytils.displayScreen = ProfileGui(uuid, args[1])
                         }
                     }
+                        }
+
                 }
             }
 

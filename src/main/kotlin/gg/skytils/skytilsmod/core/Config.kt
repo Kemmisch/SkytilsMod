@@ -2796,6 +2796,21 @@ object Config : Vigilant(
     var playersInRangeDisplay = false
 
     @Property(
+        type = PropertyType.SELECTOR, name = "PV type",
+        description = "Use a GUI for /pv or print it in chat",
+        category = "Miscellaneous", subcategory = "Other",
+        options = ["GUI","Chat"]
+    )
+    var pvMode = 1
+
+    @Property(
+        type = PropertyType.TEXT, name = "Quick Bind Items",
+        description = "Items in the hotbar that the quick bind will swap to - set to empty to disable",
+        category = "Miscellaneous", subcategory = "Other"
+    )
+    var quickBindRegex = ""
+
+    @Property(
         type = PropertyType.SWITCH, name = "Placed Summoning Eye Display",
         description = "Shows the amount of summoning eyes placed in the Dragon's Nest.",
         category = "Miscellaneous", subcategory = "Other",
