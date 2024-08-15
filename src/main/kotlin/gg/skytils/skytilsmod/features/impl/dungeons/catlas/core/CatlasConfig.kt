@@ -197,7 +197,8 @@ object CatlasConfig : Vigilant(
         type = PropertyType.SELECTOR,
         description = "Shows names of rooms on map.",
         category = "Rooms",
-        options = ["None", "Puzzles / Trap", "Rare Rooms", "All"],
+        options = ["None", "Puzzles", "Puzzles / Trap", "Rare Rooms", "All"],
+
         i18nName = "catlas.config.rooms..room_names",
         i18nCategory = "catlas.config.rooms"
     )
