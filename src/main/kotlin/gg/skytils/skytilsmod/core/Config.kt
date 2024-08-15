@@ -2188,6 +2188,13 @@ object Config : Vigilant(
     var chTreasureHelper = false
 
     @Property(
+        type = PropertyType.SWITCH, name = "Glacite Mineshafts Corpse Helper",
+        description = "Shows where corpses are in the Glacite Mineshafts",
+        category = "Mining", subcategory = "Glacite Tunnels"
+    )
+    var corpseHelper = false
+
+    @Property(
         type = PropertyType.SWITCH, name = "Chat Tabs",
         description = "Creates various tabs to organize chat.",
         category = "Miscellaneous", subcategory = "Chat Tabs",
@@ -2675,6 +2682,41 @@ object Config : Vigilant(
         i18nSubcategory = "skytils.config.miscellaneous.minions"
     )
     var showMinionTier = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Superpairs solver",
+        description = "Show clicked on items in superpairs",
+        category = "Miscellaneous", subcategory = "Solvers"
+    )
+    var superpairsSolver = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Chronomatron solver",
+        description = "Show the correct next click in chronomatron",
+        category = "Miscellaneous", subcategory = "Solvers"
+    )
+    var chronomatronSolver = false
+
+    @Property(
+        type = PropertyType.SWITCH, name = "Ultrasequencer solver",
+        description = "Show the correct next click in Ultrasequencer",
+        category = "Miscellaneous", subcategory = "Solvers"
+    )
+    var ultrasequencerSolver = false
+
+    @Property(
+        type = PropertyType.COLOR, name = "Correct click color",
+        description = "Color to show the correct click in",
+        category = "Miscellaneous", subcategory = "Solvers"
+    )
+    var correctClickColor = Color(0,255,0,100)
+
+    @Property(
+        type = PropertyType.COLOR, name = "Correct next click color",
+        description = "Color to show the next correct click in",
+        category = "Miscellaneous", subcategory = "Solvers"
+    )
+    var nextClickColor = Color(255,255,0,100)
 
     @Property(
         type = PropertyType.SWITCH, name = "Always Show Item Name Highlight",
