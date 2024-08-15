@@ -143,6 +143,7 @@ enum class SkyblockIsland(val displayName: String, val mode: String) {
     GoldMine("Gold Mine", "mining_1"),
     DeepCaverns("Deep Caverns", "mining_2"),
     DwarvenMines("Dwarven Mines", "mining_3"),
+    GlaciteMineshafts("Glacite Mineshafts","mineshaft"),
     CrystalHollows("Crystal Hollows", "crystal_hollows"),
     FarmingIsland("The Farming Islands", "farming_1"),
     ThePark("The Park", "foraging_1"),
