@@ -40,11 +40,11 @@ object JoinCommand : BaseCommand("join") {
         M5(listOf("m5","12","master5"),"MASTER_CATACOMBS_FLOOR_FIVE"),
         M6(listOf("m6","13","master6"),"MASTER_CATACOMBS_FLOOR_SIX"),
         M7(listOf("m7","14","master7"),"MASTER_CATACOMBS_FLOOR_SEVEN"),
-        BASIC(listOf("k1","","basic"),"KUUDRA_NORMAL"),
-        HOT(listOf("k2","15","hot"),"KUUDRA_HOT"),
-        BURNING(listOf("k3","16","burning"),"KUUDRA_BURNING"),
-        FIERY(listOf("k4","17","fiery","f"),"KUUDRA_FIERY"),
-        INFERNAL(listOf("k5","18","infernal","i"),"KUUDRA_INFERNAL");
+        BASIC(listOf("k1","15","basic"),"KUUDRA_NORMAL"),
+        HOT(listOf("k2","16","hot"),"KUUDRA_HOT"),
+        BURNING(listOf("k3","17","burning"),"KUUDRA_BURNING"),
+        FIERY(listOf("k4","18","fiery","f"),"KUUDRA_FIERY"),
+        INFERNAL(listOf("k5","19","infernal","i"),"KUUDRA_INFERNAL");
 
         companion object {
             fun getByAlias(text: String): String? {
@@ -57,6 +57,7 @@ object JoinCommand : BaseCommand("join") {
         "/join f2/m7/fiery/k2/e"
 
     override fun processCommand(player: EntityPlayerSP, args: Array<String>) {
+        if (args.isEmpty()) return
         val instance = Instances.getByAlias(args.joinToString(""))
         Skytils.sendMessageQueue.add("/joininstance ${instance ?: return}")
         }
