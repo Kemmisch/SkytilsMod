@@ -601,6 +601,14 @@ object ScoreCalculation {
             printDevMessage("you died. spirit: ${firstDeathHadSpirit.get()}", "scorecalcdeath")
         }
     }
+    
+    init {
+        tickTimer(5, repeats = true) {
+            isPaul.set(
+                (MayorInfo.allPerks.contains("EZPZ")) || MayorInfo.jerryMayor?.name == "Paul"
+            )
+        }
+    }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     fun onChatReceived(event: ClientChatReceivedEvent) {
