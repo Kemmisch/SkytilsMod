@@ -103,19 +103,19 @@ object PartyFinderStats {
                     val name = playerResponse.formattedName
 
                     val secrets = playerResponse.achievements.getOrDefault("skyblock_treasure_hunter", 0)
-                    val component = UMessage("&2&m--------------------------------\n").append(
+                    val component = mutableListOf("&2&m--------------------------------\n",
                         "$name §8» §dCata §9${
                             NumberUtil.nf.format(cataLevel)
                         } "
-                    ).append(
-                        UTextComponent("§7[Stats]\n\n").setHoverText("§7Click to run: /skytilscata $username").setClick(
+                    ,
+                        UTextComponent("§7[Stats]\n").setHoverText("§7Click to run: /skytilscata $username").setClick(
                             ClickEvent.Action.RUN_COMMAND, "/skytilscata $username"
                         )
                     )
                     profileData.inventory.armor.toMCItems().filterNotNull().forEach { armorPiece ->
                         val lore = armorPiece.getTooltip(mc.thePlayer, false)
-                        component.append(
-                            UTextComponent("${armorPiece.displayName}\n").setHoverText(
+                        component.add(
+                            UTextComponent(armorPiece.displayName).setHoverText(
                                 lore.joinToString("\n")
                             )
                         )
@@ -123,9 +123,9 @@ object PartyFinderStats {
 
                     profileData.pets_data.pets.find { it.active }?.let { activePet ->
                         val rarity = ItemRarity.valueOf(activePet.tier).baseColor
-                        component.append(
+                        component.add(
                             UTextComponent(
-                                "§7[Lvl ${activePet.level}] ${rarity}${
+                                "\n§7[Lvl ${activePet.level}] ${rarity}${
                                     activePet.type.splitToWords()
                                 }"
                             ).setHoverText(
@@ -133,11 +133,11 @@ object PartyFinderStats {
                                     ?: "§cNo Pet Item"}"
                             )
                         )
-                    } ?: component.append("§cNo Pet Equipped!")
+                    } ?: component.add("\n§cNo Pet Equipped!")
 
                     profileData.pets_data.pets.find(Pet::isSpirit)?.run {
-                        component.append(" §7(§6Spirit§7)\n\n")
-                    } ?: component.append(" §7(No Spirit)\n\n")
+                        component.add(" §7(§6Spirit§7)\n")
+                    } ?: component.add(" §7(No Spirit)\n")
 
                     val allItems = profileData.inventory.inventory.toMCItems() +
                             profileData.inventory.ender_chest.toMCItems() +
@@ -186,7 +186,7 @@ object PartyFinderStats {
 
                                 remove(null)
                             }
-                            component.append(
+                            component.add(
                                 UTextComponent("§dImportant Items: §7(Hover)\n").setHoverText(items.joinToString(
                                     "§8, "
                                 ).ifBlank { "§c§lNone" })
@@ -234,21 +234,15 @@ object PartyFinderStats {
                             else -> it
                         }
                     }
-
-                    component.append(
-                        UTextComponent("§5Miscellanous: §7(Hover)\n\n").setHoverText(
-                            """
-                                #§aTotal Secrets Found: §l§e${NumberUtil.nf.format(secrets)}
-                                #§aBlood Mobs Killed: §l§e${NumberUtil.nf.format(bloodMobsKilled)}
-                                #§dMagical Power: §l§e$magicalPower
-                            """.trimMargin("#")
-                        )
-                    )
+                    component.add("§5Miscellanous:")
+                    component.add("§aTotal Secrets Found: §l§e${NumberUtil.nf.format(secrets)}")
+                    component.add("§aBlood Mobs Killed: §l§e${NumberUtil.nf.format(bloodMobsKilled)}")
+                    component.add("§dMagical Power: §l§e$magicalPower\n")
 
                     cataData.highest_tier_completed.let { highestFloor ->
                         val completionObj = cataData.tier_completions
-                        component.append(
-                            UTextComponent("§aFloor Completions: §7(Hover)\n").setHoverText((0..highestFloor).joinToString(
+                        component.add(
+                            UTextComponent("§aFloor Completions: §7(Hover)").setHoverText((0..highestFloor).joinToString(
                                 "\n"
                             ) { floor ->
                                 "§2§l●§a Floor ${if (floor == 0) "Entrance" else floor}: §e${
@@ -266,7 +260,7 @@ object PartyFinderStats {
 
                     masterCataData?.highest_tier_completed?.let { highestFloor ->
                         val masterCompletionObj = masterCataData.tier_completions
-                        component.append(
+                        component.add(
                             UTextComponent("§l§4MM §cFloor Completions: §7(Hover)\n").setHoverText((1..highestFloor).joinToString(
                                 "\n"
                             ) { floor ->
@@ -284,13 +278,15 @@ object PartyFinderStats {
                     }
 
                     if (withKick) {
-                        component.append(
+                        component.add(
                             UTextComponent("\n§c§l[KICK]\n").setHoverText("§cClick to kick ${name}§c.")
                                 .setClick(ClickEvent.Action.RUN_COMMAND, "/p kick $username")
                         )
                     }
 
-                    component.append("&2&m--------------------------------").chat()
+                    component.add("&2&m--------------------------------")
+                    component.forEach { UChat.chat(it) }
+                    component.clear()
                 } ?: UChat.chat("$failPrefix §c$username has not entered The Catacombs!")
             } catch (e: Throwable) {
                 UChat.chat("$failPrefix §cCatacombs XP Lookup Failed: ${e.message ?: e::class.simpleName}")

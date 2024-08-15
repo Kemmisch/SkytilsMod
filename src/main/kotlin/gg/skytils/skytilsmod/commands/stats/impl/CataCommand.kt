@@ -18,6 +18,7 @@
 
 package gg.skytils.skytilsmod.commands.stats.impl
 
+import gg.essential.universal.UChat
 import gg.essential.universal.utils.MCHoverEventAction
 import gg.essential.universal.wrappers.message.UMessage
 import gg.essential.universal.wrappers.message.UTextComponent
@@ -107,49 +108,49 @@ object CataCommand : StatCommand("skytilscata") {
                     50.0
                 ) + tankLevel.coerceAtMost(50.0)) / 5.0
 
-            val component = UMessage("§a➜ Catacombs Statistics Viewer\n")
-                .append(
-                    "§2§l ❣ §7§oYou are looking at data for ${playerResponse?.formattedName}§7§o.\n\n"
-                )
-                .append("§a§l➜ Catacombs Levels:\n")
-                .append(
-                    UTextComponent("§d ☠ Cata Level: §l➡ §e${nf.format(cataLevel)}\n").setHover(
+            val component = mutableListOf("§a➜ Catacombs Statistics Viewer\n"
+                ,
+                    "§2§l ❣ §7§oYou are looking at data for ${playerResponse?.formattedName}§7§o."
+                ,
+                "§a§l➜ Catacombs Levels:"
+                ,
+                    UTextComponent("§d ☠ Cata Level: §l➡ §e${nf.format(cataLevel)}").setHover(
                         MCHoverEventAction.SHOW_TEXT,
                         "§e${nf.format(catacombsObj.experience)} XP"
                     )
-                )
-                .append("§9 ☠ Class Avg: §l➡ §e${nf.format(classAvgCapped)} §7(${nf.format(classAvgOverflow)})\n\n")
-                .append(
-                    UTextComponent("§6 ☣ Archer Level: §l➡ §e${nf.format(archLevel)}\n").setHover(
+
+                ,"§9 ☠ Class Avg: §l➡ §e${nf.format(classAvgCapped)} §7(${nf.format(classAvgOverflow)})"
+                ,
+                    UTextComponent("§6 ☣ Archer Level: §l➡ §e${nf.format(archLevel)}").setHover(
                         MCHoverEventAction.SHOW_TEXT,
                         "§e${nf.format(archXP)} XP"
                     )
-                )
-                .append(
-                    UTextComponent("§c ⚔ Berserk Level: §l➡ §e${nf.format(bersLevel)}\n").setHover(
+
+                ,
+                    UTextComponent("§c ⚔ Berserk Level: §l➡ §e${nf.format(bersLevel)}").setHover(
                         MCHoverEventAction.SHOW_TEXT,
                         "§e${nf.format(bersXP)} XP"
                     )
-                )
-                .append(
-                    UTextComponent("§a ❤ Healer Level: §l➡ §e${nf.format(healerLevel)}\n").setHover(
+
+                ,
+                    UTextComponent("§a ❤ Healer Level: §l➡ §e${nf.format(healerLevel)}").setHover(
                         MCHoverEventAction.SHOW_TEXT,
                         "§e${nf.format(healerXP)} XP"
                     )
-                )
-                .append(
-                    UTextComponent("§b ✎ Mage Level: §l➡ §e${nf.format(mageLevel)}\n").setHover(
+
+                ,
+                    UTextComponent("§b ✎ Mage Level: §l➡ §e${nf.format(mageLevel)}").setHover(
                         MCHoverEventAction.SHOW_TEXT,
                         "§e${nf.format(mageXP)} XP"
                     )
-                )
-                .append(
-                    UTextComponent("§7 ❈ Tank Level: §l➡ §e${nf.format(tankLevel)}\n\n").setHover(
+
+                ,
+                    UTextComponent("§7 ❈ Tank Level: §l➡ §e${nf.format(tankLevel)}\n").setHover(
                         MCHoverEventAction.SHOW_TEXT,
                         "§e${nf.format(tankXP)} XP"
                     )
-                )
-                .append("§a§l➜ Floor Completions:\n")
+
+                ,"§a§l➜ Floor Completions:")
 
 
             val completionObj = cataData.tier_completions
@@ -157,9 +158,9 @@ object CataCommand : StatCommand("skytilscata") {
 
             if (highestFloor != 0) {
                 if (completionObj.isNotEmpty()) {
-                    component.append(
+                    component.add(
                         createNormalComponent(
-                            " §aFloor Completions: §7(Hover)\n",
+                            " §aFloor Completions: §7(Hover)",
                             highestFloor,
                             completionObj
                         ) { completions ->
@@ -169,9 +170,9 @@ object CataCommand : StatCommand("skytilscata") {
                 }
 
                 if (cataData.fastest_time_s.isNotEmpty()) {
-                    component.append(
+                    component.add(
                         createNormalComponent(
-                            " §aFastest §2S §aCompletions: §7(Hover)\n",
+                            " §aFastest §2S §aCompletions: §7(Hover)",
                             highestFloor,
                             cataData.fastest_time_s
                         ) { time ->
@@ -182,9 +183,9 @@ object CataCommand : StatCommand("skytilscata") {
 
 
                 if (cataData.fastest_time_s_plus.isNotEmpty()) {
-                    component.append(
+                    component.add(
                         createNormalComponent(
-                            " §aFastest §2S+ §aCompletions: §7(Hover)\n\n",
+                            " §aFastest §2S+ §aCompletions: §7(Hover)",
                             highestFloor,
                             cataData.fastest_time_s_plus
                         ) { time ->
@@ -200,11 +201,11 @@ object CataCommand : StatCommand("skytilscata") {
                 if (masterCompletionObj.isNotEmpty() && highestMasterFloor != 0) {
 
                     component
-                        .append("§a§l➜ Master Mode:\n")
+                        .add("\n§a§l➜ Master Mode:")
 
-                    component.append(
+                    component.add(
                         createMasterComponent(
-                            " §aFloor Completions: §7(Hover)\n",
+                            " §aFloor Completions: §7(Hover)",
                             highestMasterFloor,
                             masterCompletionObj
                         ) { completions ->
@@ -212,9 +213,9 @@ object CataCommand : StatCommand("skytilscata") {
                         }
                     )
 
-                    component.append(
+                    component.add(
                         createMasterComponent(
-                            " §aFastest §2S §aCompletions: §7(Hover)\n",
+                            " §aFastest §2S §aCompletions: §7(Hover)",
                             highestMasterFloor,
                             masterCataData.fastest_time_s,
                             "§cNo S Completions"
@@ -223,9 +224,9 @@ object CataCommand : StatCommand("skytilscata") {
                         }
                     )
 
-                    component.append(
+                    component.add(
                         createMasterComponent(
-                            " §aFastest §2S+ §aCompletions: §7(Hover)\n\n",
+                            " §aFastest §2S+ §aCompletions: §7(Hover)",
                             highestMasterFloor,
                             masterCataData.fastest_time_s_plus,
                             "§cNo S+ Completions"
@@ -237,10 +238,9 @@ object CataCommand : StatCommand("skytilscata") {
 
             }
 
-            component
-                .append("§a§l➜ Miscellaneous:\n")
-                .append(" §aTotal Secrets Found: §l➡ §e${nf.format(secrets)}\n")
-                .append(
+            component.add("\n§a§l➜ Miscellaneous:")
+            component.add(" §aTotal Secrets Found: §l➡ §e${nf.format(secrets)}")
+            component.add(
                     " §aBlood Mobs Killed: §l➡ §e${
                         nf.format(
                             (profileData.player_stats.kills["watcher_summon_undead"]?.toInt() ?: 0) +
@@ -248,7 +248,9 @@ object CataCommand : StatCommand("skytilscata") {
                         )
                     }\n"
                 )
-                .chat()
+
+            component.forEach { UChat.chat(it) }
+            component.clear()
         } catch (e: Throwable) {
             printMessage("$failPrefix §cCatacombs XP Lookup Failed: ${e.message ?: e::class.simpleName}")
             e.printStackTrace()
