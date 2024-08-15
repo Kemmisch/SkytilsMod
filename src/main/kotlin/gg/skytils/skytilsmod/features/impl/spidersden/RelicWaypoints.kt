@@ -136,7 +136,7 @@ object RelicWaypoints : Tracker("found_spiders_den_relics") {
         }
     }
 
-    override fun resetLoot() {
+    override fun resetEntries() {
         foundRelics.clear()
     }
 

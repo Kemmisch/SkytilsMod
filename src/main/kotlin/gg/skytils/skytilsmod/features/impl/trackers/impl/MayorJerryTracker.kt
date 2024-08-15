@@ -120,7 +120,7 @@ object MayorJerryTracker : Tracker("mayorjerry") {
         }
     }
 
-    override fun resetLoot() {
+    override fun resetEntries() {
         HiddenJerry.entries.onEach { it.discoveredTimes = 0L }
         JerryBoxDrops.entries.onEach { it.droppedAmount = 0L }
     }

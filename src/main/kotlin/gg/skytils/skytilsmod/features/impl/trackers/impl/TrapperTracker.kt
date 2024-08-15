@@ -69,7 +69,7 @@ object TrapperTracker : Tracker("trapper") {
         }
     }
 
-    override fun resetLoot() {
+    override fun resetEntries() {
         TrapperMob.entries.forEach { it.foundTimes = 0L }
     }
 

@@ -36,9 +36,9 @@ abstract class Tracker(val id: String) : PersistentSave(File(File(Skytils.modDir
     }
 
     fun doReset() {
-        resetLoot()
+        resetEntries()
         markDirty(this::class)
     }
 
-    protected abstract fun resetLoot()
+    protected abstract fun resetEntries()
 }

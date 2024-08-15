@@ -171,7 +171,7 @@ object DupeTracker : Tracker("duped_items") {
         }
     }
 
-    override fun resetLoot() {
+    override fun resetEntries() {
         dupedUUIDs.clear()
     }
 

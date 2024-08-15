@@ -215,7 +215,7 @@ object MythologicalTracker : Tracker("mythological") {
         }
     }
 
-    override fun resetLoot() {
+    override fun resetEntries() {
         burrowsDug = 0L
         BurrowDrop.entries.forEach { it.droppedTimes = 0L }
         BurrowMob.entries.forEach { it.dugTimes = 0L }
