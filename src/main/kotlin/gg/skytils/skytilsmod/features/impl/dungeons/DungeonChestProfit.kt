@@ -117,28 +117,41 @@ object DungeonChestProfit {
             drawChestProfit(chestType)
             GlStateManager.popMatrix()
         } else if (croesusChestRegex.matches(event.chestName)) {
-            for (i in 10..16) {
+            var maxProfit = 0.0
+            var bestChest = 0
+            for (i in 16 downTo 10) {
                 val openChest = inv.getStackInSlot(i) ?: continue
                 val chestType = DungeonChest.getFromName(openChest.displayName.stripControlCodes()) ?: continue
                 val lore = ItemUtil.getItemLore(openChest)
 
                 val contentIndex = lore.indexOf("§7Contents")
                 if (contentIndex == -1) continue
+                if (lore.contains("§aAlready opened!")) {
+                    chestType.value = 0.0
+                } else {
 
-                chestType.price = getChestPrice(lore)
-                chestType.value = 0.0
-                chestType.items.clear()
+                    chestType.price = getChestPrice(lore)
+                    chestType.value = 0.0
+                    chestType.items.clear()
 
-                lore.drop(contentIndex + 1).takeWhile { it != "" }.forEach { drop ->
-                    val value = if (drop.contains("Essence")) {
-                        getEssenceValue(drop) ?: return@forEach
-                    } else {
-                        if (getIdFromName(drop) in ignoreItems) 0.0 else AuctionData.lowestBINs[getIdFromName(drop)] ?: 0.0
+                    lore.drop(contentIndex + 1).takeWhile { it != "" }.forEach { drop ->
+                        val value = if (drop.contains("Essence")) {
+                            getEssenceValue(drop) ?: return@forEach
+                        } else {
+                            if (getIdFromName(drop) in ignoreItems) 0.0 else AuctionData.lowestBINs[getIdFromName(drop)]
+                                ?: 0.0
+                        }
+                        chestType.value += value
                     }
-                    chestType.value += value
                 }
-
+                if (chestType.value - chestType.price >= maxProfit) {
+                    maxProfit = chestType.value - chestType.price
+                    bestChest = i
+                }
                 chestType.items.add(DungeonChestLootItem(openChest, chestType.value))
+            }
+            if (Skytils.config.croesusChestHighlight) {
+                event.container.getSlot(bestChest).highlight(Color(0,255,0,100))
             }
         }
     }
