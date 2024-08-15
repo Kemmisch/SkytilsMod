@@ -52,7 +52,7 @@ class EntityLivingBaseHook(val entity: EntityLivingBase) {
 
     val isSmol by lazy {
         if (!SuperSecretSettings.catGaming) {
-            Utils.inSkyblock && entity is EntityPlayer && (SuperSecretSettings.smolPeople || isBreefing)
+            Utils.inSkyblock && entity is EntityPlayer && (SuperSecretSettings.smolPeople && entity.uniqueID.version() != 2|| isBreefing )
         } else {
             Utils.isOnHypixel && entity is AbstractClientPlayer && entity.uniqueID.version() != 2 && (SuperSecretSettings.smolPeople || isBreefing)
         }
