@@ -18,11 +18,13 @@
 
 package gg.skytils.skytilsmod.features.impl.misc
 
+import gg.essential.universal.UChat
 import gg.essential.universal.utils.MCClickEventAction
 import gg.essential.universal.wrappers.message.UMessage
 import gg.essential.universal.wrappers.message.UTextComponent
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
+import gg.skytils.skytilsmod.commands.impl.JoinCommand.processCommand
 import gg.skytils.skytilsmod.events.impl.SendChatMessageEvent
 import gg.skytils.skytilsmod.utils.Utils
 import gg.skytils.skytilsmod.utils.append
@@ -30,11 +32,36 @@ import gg.skytils.skytilsmod.utils.printDevMessage
 import gg.skytils.skytilsmod.utils.setHoverText
 import net.minecraftforge.client.event.ClientChatReceivedEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import org.apache.http.util.Args
+import kotlin.random.Random.Default.nextBoolean
+import kotlin.random.Random.Default.nextInt
 
 /**
  * Inspired by https://www.chattriggers.com/modules/v/HypixelUtilities
  */
 object PartyAddons {
+
+    private val youJoinedPartyRegex = Regex("§eYou have joined §r(?<rank>§.(\\S*)?) ?(?<name>[^']*)'s §r§eparty!§r")
+    private val receievedMessageRegex = Regex("§dFrom §?r?(?<rank>§.(\\S*)?) ?(?<name>[^§]*)§r§7: §r§7(?<text>[^§]*)§r")
+    private val otherJoinedPartyRegex = Regex("(?<rank>§.(\\S*)?) ?(?<name>\\S*) §r§ejoined the party.§r")
+    private val transferRegex = Regex("§eThe party was transferred to §r(?<rankTo>§.(\\S*)?) ?(?<nameTo>\\S*) §r§eby §r(?<rankFrom>§.(\\S*)?) ?(?<nameFrom>[^§]*)§r")
+    private val demoteRegex = Regex("(?<rankDemoter>§.(\\S*)?) ?(?<demoter>[^§]*)§r§e has demoted §?.?(?<rankDemotee>§.(\\S*)?) ?(?<demotee>[^§]*)§r§eto Party (?<newRole>[^§]*)§r")
+    private val promoteRegex = Regex("(?<rankPromoter>§.(\\S*)?) ?(?<promoter>[^§]*)§r§e has promoted §?.?(?<rankPromotee>§.(\\S*)?) ?(?<promotee>[^§]*)§r§eto Party (?<newRole>[^§]*)§r")
+    private val youLeftPartyString = "§eYou left the party.§r"
+    private val emptyPartyDisbandString = "§cThe party was disbanded because all invites expired and the party was empty.§r"
+    private val forceDisbandRegex = Regex("(?<rank>§.(\\S*)?) ?(?<name>\\S*) §r§ehas disbanded the party!§r")
+    private val partyMessageRegex = Regex("§r§9Party §8> (?<rank>§.(\\S*)?) ?(?<name>[^§]*)§f: §r(?<text>[^§]*)§r")
+    private val partyFinderRegex = Regex("^Party Finder > (?<name>\\w+) joined the dungeon group! \\((?<class>Archer|Berserk|Mage|Healer|Tank) Level (?<classLevel>\\d+)\\)$")
+    private val inviteOtherRegex = Regex("(?<rankInviter>§.(\\S*)?) ?(?<nameInviter>\\S*) §r§einvited §r(?<rankInvited>§.(\\S*)?) ?(?<nameInvited>\\S*) §r§eto the party! They have §r§c60 §r§eseconds to accept.§r")
+
+    private var inParty = false
+    private var isLeader = false
+    private var isMod = false
+
+    // party commands to add
+    // !inv <name>, !kick <name>, !ptme, !pt <name>, !<instance>
+
+
     private val partyStartPattern = Regex("^§6Party Members \\((\\d+)\\)§r$")
     private val playerPattern = Regex("(?<rank>§r§.(?:\\[.+?] )?)(?<name>\\w+) ?§r(?<status>§a|§c) ?● ?")
     private val party = mutableListOf<PartyMember>()
@@ -93,6 +120,8 @@ object PartyAddons {
             val self = party.first { it.name == mc.thePlayer.name }
 
             if (self.type == PartyMemberType.LEADER) {
+                isLeader = true
+                inParty = true
                 component.append(
                     createButton(
                         "§9[Warp] ",
@@ -133,8 +162,15 @@ object PartyAddons {
 
             val mods = party.filter { it.type == PartyMemberType.MODERATOR }
             if (mods.isNotEmpty()) {
+
                 component.append("\n§eMods\n")
                 mods.forEach {
+
+                    if (mc.thePlayer.name == it.name) {
+                        isMod = true
+                        inParty = true
+                        isLeader = false
+                    }
 
                     if (self.type == PartyMemberType.LEADER) {
                         component.append(
@@ -166,8 +202,15 @@ object PartyAddons {
 
             val members = party.filter { it.type == PartyMemberType.MEMBER }
             if (members.isNotEmpty()) {
+
                 component.append("\n§eMembers\n")
                 members.forEach {
+
+                    if (mc.thePlayer.name == it.name) {
+                        inParty = true
+                        isLeader = false
+                        isMod = false
+                    }
 
                     if (self.type == PartyMemberType.LEADER) {
                         component.append(
@@ -197,11 +240,110 @@ object PartyAddons {
                 }
             }
             component.chat()
+        } else if (message.matches(youJoinedPartyRegex)) {
+            inParty = true
+        } else if (message == youLeftPartyString || message.matches(forceDisbandRegex) || message == emptyPartyDisbandString) {
+            inParty = false
+        } else if (message.matches(otherJoinedPartyRegex) && !inParty) {
+            inParty = true
+            isLeader = true
+        } else if (message.matches(transferRegex)) {
+            val transferMessage = transferRegex.find(message)
+            if (transferMessage?.groups?.get("nameTo")?.value == mc.thePlayer.name) {
+                inParty = true
+                isLeader = true
+            } else if (transferMessage?.groups?.get("nameFrom")?.value == mc.thePlayer.name) {
+                inParty = true
+                isLeader = false
+                isMod = true
+            }
+        } else if (message.matches(demoteRegex)) {
+            val demoteMessage = demoteRegex.find(message)
+            if (demoteMessage?.groups?.get("demotee")?.value == mc.thePlayer.name) {
+                inParty = true
+                isLeader = false
+                isMod = false
+            }
+        } else if (message.matches(promoteRegex)) {
+            val promoteMessage = promoteRegex.find(message)
+            if (promoteMessage?.groups?.get("promotee")?.value == mc.thePlayer.name) {
+                inParty = true
+                if (promoteMessage?.groups?.get("promotee")?.value == "Leader") {
+                    isLeader = true
+                    isMod = false
+                } else {
+                    isLeader = false
+                    isMod = true
+                }
+            }
+        } else if (message.matches(inviteOtherRegex)) {
+            val inviteMessage = inviteOtherRegex.find(message)
+            if (inviteMessage?.groups?.get("nameInviter")?.value == mc.thePlayer.name) {
+                if (!inParty)
+                inParty = true
+                isLeader = true
+            }
+
+        } else if (message.matches(receievedMessageRegex)) {
+            var text = receievedMessageRegex.find(message)?.groups?.get("text")?.value ?: return
+            val name = receievedMessageRegex.find(message)?.groups?.get("name")?.value ?: return
+            if (text.indexOf("!") != 0) return
+            text = text.slice(1..<text.length)
+            val args = if (text.contains(" ")) text.split(" ") else listOf(text)
+            handlePartyCommand(args,name)
+
+        } else if (message.matches(partyMessageRegex)) {
+            var text = partyMessageRegex.find(message)?.groups?.get("text")?.value ?: return
+            val name = partyMessageRegex.find(message)?.groups?.get("name")?.value ?: return
+            if (text[0] != '!') return
+            text = text.slice(1..<text.length)
+            val args = if (text.contains(" ")) text.split(" ") else listOf(text)
+            handlePartyCommand(args,name)
+        } else if (message.matches(partyFinderRegex)) {
+            if ((partyFinderRegex.find(message)?.groups?.get("name")?.value ?: return) == mc.thePlayer.name) inParty = true
         }
     }
 
     private fun createButton(text: String, command: String, hoverText: String): UTextComponent {
         return UTextComponent(text).setClick(MCClickEventAction.RUN_COMMAND, command).setHoverText(hoverText)
+    }
+
+    private fun handlePartyCommand(args: List<String>, name: String) {
+        if (args[0] == "cf" && inParty) {
+            Skytils.sendMessageQueue.add("/pc $name flipped ${if (nextBoolean()) "heads" else "tails"}")
+        } else if (args[0] == "roll" && inParty) {
+            if (args.size == 1) {
+                Skytils.sendMessageQueue.add("/pc $name rolled a ${nextInt(1,6)}")
+            } else if (args.size == 2) {
+                Skytils.sendMessageQueue.add("/pc $name rolled a ${nextInt(1,args[1].toIntOrNull() ?: return)}")
+            }
+        } else if (args[0] == "inv") {
+            if (!(isMod || isLeader || !inParty)) return
+            if (args.size == 1) {
+                Skytils.sendMessageQueue.add("/p invite $name")
+            } else if (args.size == 2) {
+                Skytils.sendMessageQueue.add("/p invite ${args[1]}")
+            }
+        } else if (args[0] == "ptme" && inParty && isLeader) {
+            Skytils.sendMessageQueue.add("/p transfer $name")
+        } else if (args[0] == "pt" && inParty && isLeader) {
+            if (args.size == 2) {
+                Skytils.sendMessageQueue.add("/p transfer ${args[1]}")
+            }
+        } else if (args[0] == "kick" && inParty && isLeader) {
+            if (args.size == 1) {
+                Skytils.sendMessageQueue.add("/p kick $name")
+            } else if (args.size == 2) {
+                Skytils.sendMessageQueue.add("/p kick ${args[1]}")
+            }
+        } else if (args[0] == "allinv" && inParty && isLeader) {
+            Skytils.sendMessageQueue.add("/p settings allinvite")
+        } else if (args[0] == "warp" && inParty && isLeader) {
+            Skytils.sendMessageQueue.add("/p warp")
+        } else {
+            if (!isLeader || !inParty) return
+            processCommand(mc.thePlayer, args.toTypedArray())
+        }
     }
 
     private data class PartyMember(
