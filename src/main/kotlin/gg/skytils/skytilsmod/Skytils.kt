@@ -575,9 +575,8 @@ class Skytils {
             TrophyFish.loadFromApi()
         }
 
-        IO.launch {
+        if (config.connectToWS)
             WSClient.openConnection()
-        }
     }
 
     @SubscribeEvent
@@ -633,9 +632,7 @@ class Skytils {
         Utils.skyblock = false
         Utils.dungeons = false
 
-        IO.launch {
-            WSClient.closeConnection()
-        }
+        WSClient.closeConnection()
     }
 
     @SubscribeEvent
