@@ -116,7 +116,12 @@ object MiscFeatures {
         WorldAgeDisplay()
     }
 
-
+    @SubscribeEvent // Code from @Bert4200
+    fun onAnvilRename(event: AnvilRepairEvent) {
+        if (event.right != null) {
+            event.right.setStackDisplayName(event.right.displayName.replace("$","§"))
+        }
+    }
 
     @SubscribeEvent
     fun onSendChatMessage(event: SendChatMessageEvent) {
