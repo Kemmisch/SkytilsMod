@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.first
 import net.hypixel.modapi.HypixelModAPI
 import net.hypixel.modapi.error.ErrorReason
 import net.hypixel.modapi.packet.ClientboundHypixelPacket
-import net.hypixel.modapi.packet.EventPacket
 import net.hypixel.modapi.packet.impl.clientbound.ClientboundHelloPacket
 import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket
 import net.hypixel.modapi.packet.impl.serverbound.ServerboundVersionedPacket
@@ -45,23 +44,11 @@ import net.minecraft.network.play.client.C17PacketCustomPayload
 import net.minecraft.network.play.server.S3FPacketCustomPayload
 import net.minecraftforge.fml.common.eventhandler.EventPriority
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
-import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.minutes
 
 object ServerPayloadInterceptor {
     private val receivedPackets = MutableSharedFlow<ClientboundHypixelPacket>()
     private var didSetPacketSender = false
-    private val neededEvents = mutableSetOf<KClass<out EventPacket>>(ClientboundLocationPacket::class)
-
-    init {
-        neededEvents.forEach {
-            runCatching {
-                HypixelModAPI.getInstance().subscribeToEventPacket(it.java)
-            }.onFailure {
-                it.printStackTrace()
-            }
-        }
-    }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     fun onReceivePacket(event: PacketEvent.ReceiveEvent) {
@@ -126,9 +113,7 @@ object ServerPayloadInterceptor {
                     delay(50L)
                 }
                 withContext(Dispatchers.MC) {
-                    neededEvents.forEach {
-                        HypixelModAPI.getInstance().subscribeToEventPacket(it.java)
-                    }
+                    modAPI.subscribeToEventPacket(ClientboundLocationPacket::class.java)
                     if (didSetPacketSender) modAPI.invokeSendRegisterPacket(true)
                 }
             }

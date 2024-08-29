@@ -79,6 +79,7 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.event.entity.EntityJoinWorldEvent
 import net.minecraftforge.event.entity.living.EnderTeleportEvent
+import net.minecraftforge.event.entity.player.AnvilRepairEvent
 import net.minecraftforge.event.entity.player.ItemTooltipEvent
 import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.Loader
@@ -130,6 +131,13 @@ object MiscFeatures {
             event.isCanceled = true
             lastCoopAddCommand = System.currentTimeMillis()
             UChat.chat("$failPrefix §c§lBe careful! Skytils stopped you from giving a player full control of your island! §6Run the command again if you are sure!")
+        }
+    }
+
+    @SubscribeEvent // Code from @Bert4200
+    fun onAnvilRename(event: AnvilRepairEvent) {
+        if (event.right != null) {
+            event.right.setStackDisplayName(event.right.displayName.replace("$","§"))
         }
     }
 
