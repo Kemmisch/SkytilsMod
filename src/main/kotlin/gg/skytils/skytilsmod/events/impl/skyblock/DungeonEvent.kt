@@ -19,11 +19,19 @@
 package gg.skytils.skytilsmod.events.impl.skyblock
 
 import gg.skytils.skytilsmod.events.SkytilsEvent
+import gg.skytils.skytilsmod.features.impl.dungeons.catlas.core.map.Room
 
 open class DungeonEvent : SkytilsEvent() {
     open class PuzzleEvent(val puzzle: String) : DungeonEvent() {
         class Discovered(puzzle: String) : PuzzleEvent(puzzle)
         class Completed(puzzle: String) : PuzzleEvent(puzzle)
         class Reset(puzzle: String): PuzzleEvent(puzzle)
+    }
+
+    open class RoomEvent(val room: Room?) : DungeonEvent() {
+        class Discovered(room: Room?) : RoomEvent(room)
+        class Entered(room: Room?) : RoomEvent(room)
+        class Cleared(room: Room?) : RoomEvent(room)
+        class Completed(room: Room?) : RoomEvent(room)
     }
 }
