@@ -32,7 +32,7 @@ import gg.skytils.skytilsmod.features.impl.dungeons.catlas.core.map.*
 import gg.skytils.skytilsmod.features.impl.dungeons.catlas.handlers.DungeonInfo
 import gg.skytils.skytilsmod.features.impl.dungeons.catlas.handlers.DungeonScanner
 import gg.skytils.skytilsmod.features.impl.dungeons.catlas.handlers.MapUpdater
-import gg.skytils.skytilsmod.features.impl.dungeons.catlas.handlers.MimicDetector
+import gg.skytils.skytilsmod.features.impl.dungeons.catlas.handlers.DungeonDetectors
 import gg.skytils.skytilsmod.features.impl.dungeons.catlas.utils.MapUtils
 import gg.skytils.skytilsmod.utils.RenderUtil
 import gg.skytils.skytilsmod.utils.Utils
@@ -51,8 +51,8 @@ object Catlas {
         DungeonInfo.reset()
         MapUtils.calibrated = false
         DungeonScanner.hasScanned = false
-        MimicDetector.mimicOpenTime = 0
-        MimicDetector.mimicPos = null
+        DungeonDetectors.mimicOpenTime = 0
+        DungeonDetectors.mimicPos = null
     }
 
     @SubscribeEvent
@@ -72,7 +72,7 @@ object Catlas {
             }
 
             if ((DungeonFeatures.dungeonFloorNumber ?: 0) >= 6) {
-                MimicDetector.checkMimicDead()
+                DungeonDetectors.checkMimicDead()
             }
         }
 
@@ -143,7 +143,7 @@ object Catlas {
         CatlasElement
 
         arrayOf(
-            MimicDetector,
+            DungeonDetectors,
         ).forEach(MinecraftForge.EVENT_BUS::register)
     }
 }

@@ -18,26 +18,57 @@
 
 package gg.skytils.skytilsmod.features.impl.dungeons.catlas.handlers
 
+import gg.essential.universal.UChat
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.events.impl.BlockChangeEvent
+import gg.skytils.skytilsmod.events.impl.skyblock.DungeonEvent
 import gg.skytils.skytilsmod.features.impl.dungeons.ScoreCalculation
+import gg.skytils.skytilsmod.features.impl.dungeons.catlas.core.map.Room
+import gg.skytils.skytilsmod.features.impl.dungeons.catlas.core.map.RoomState
+import gg.skytils.skytilsmod.features.impl.dungeons.catlas.core.map.RoomType
+import gg.skytils.skytilsmod.features.impl.dungeons.catlas.utils.ScanUtils
 import gg.skytils.skytilsmod.utils.Utils
 import net.minecraft.entity.monster.EntityZombie
 import net.minecraft.init.Blocks
 import net.minecraft.util.BlockPos
+import net.minecraftforge.client.event.ClientChatReceivedEvent
 import net.minecraftforge.event.entity.living.LivingDeathEvent
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
+import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent
+import kotlin.math.floor
 
-object MimicDetector {
+object DungeonDetectors {
     var mimicOpenTime = 0L
     var mimicPos: BlockPos? = null
+    var currentRoom: Room? = null
+
+
 
     @SubscribeEvent
     fun onBlockChange(event: BlockChangeEvent) {
         if (Utils.inDungeons && event.old.block == Blocks.trapped_chest && event.update.block == Blocks.air) {
             mimicOpenTime = System.currentTimeMillis()
             mimicPos = event.pos
+        }
+    }
+
+    @SubscribeEvent
+    fun onTick(event: ClientTickEvent) {
+        if (!Utils.inDungeons) return
+        if (ScanUtils.getRoomFromPos(mc.thePlayer.position) != currentRoom) {
+            currentRoom = ScanUtils.getRoomFromPos(mc.thePlayer.position)
+            DungeonEvent.RoomEvent.Entered(currentRoom).postAndCatch()
+        }
+    }
+
+    @SubscribeEvent
+    fun onChat(event: ClientChatReceivedEvent) {
+        if (!Utils.inDungeons) return
+        if (event.message.formattedText == "§r§c[BOSS] The Watcher§r§f: You have proven yourself. You may pass.§r") {
+            DungeonInfo.uniqueRooms.find{ it.mainRoom.data.type == RoomType.BLOOD }?.mainRoom?.state = RoomState.GREEN
+        } else if (event.message.formattedText == "§r§c[BOSS] The Watcher§r§f: That will be enough for now.§r") {
+            DungeonInfo.uniqueRooms.find{ it.mainRoom.data.type == RoomType.BLOOD }?.mainRoom?.state = RoomState.CLEARED
         }
     }
 
