@@ -22,6 +22,7 @@ import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.events.impl.skyblock.DungeonEvent
+import gg.skytils.skytilsmod.features.impl.dungeons.catlas.handlers.DungeonDetectors.currentRoom
 import gg.skytils.skytilsmod.listeners.DungeonListener
 import gg.skytils.skytilsmod.utils.RenderUtil
 import gg.skytils.skytilsmod.utils.SuperSecretSettings
@@ -121,7 +122,7 @@ object TicTacToeSolver {
 
     @SubscribeEvent
     fun onRenderWorld(event: RenderWorldLastEvent) {
-        if (!Utils.inDungeons || !Skytils.config.ticTacToeSolver) return
+        if (!Utils.inDungeons || !Skytils.config.ticTacToeSolver || currentRoom?.data?.name != "Tic Tac Toe") return
         if (bestMove != null) {
             RenderUtil.drawOutlinedBoundingBox(
                 AxisAlignedBB(bestMove, bestMove!!.add(1, 1, 1)),

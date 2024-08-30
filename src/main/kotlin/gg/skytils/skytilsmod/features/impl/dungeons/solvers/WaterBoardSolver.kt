@@ -21,6 +21,7 @@ import gg.essential.universal.UMatrixStack
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.tickTimer
+import gg.skytils.skytilsmod.features.impl.dungeons.catlas.handlers.DungeonDetectors.currentRoom
 import gg.skytils.skytilsmod.listeners.DungeonListener
 import gg.skytils.skytilsmod.utils.RenderUtil
 import gg.skytils.skytilsmod.utils.SuperSecretSettings
@@ -230,7 +231,7 @@ object WaterBoardSolver {
 
     @SubscribeEvent
     fun onRenderWorld(event: RenderWorldLastEvent) {
-        if (!Skytils.config.waterBoardSolver || !DungeonListener.missingPuzzles.contains("Water Board")) return
+        if (!Skytils.config.waterBoardSolver || !DungeonListener.missingPuzzles.contains("Water Board") || currentRoom?.data?.name != "Water Board") return
         if (chestPos == null || roomFacing == null || variant == -1) return
         val leverStates = LeverBlock.entries.associateWithTo(EnumMap(LeverBlock::class.java)) {
             getLeverToggleState(it.leverPos)

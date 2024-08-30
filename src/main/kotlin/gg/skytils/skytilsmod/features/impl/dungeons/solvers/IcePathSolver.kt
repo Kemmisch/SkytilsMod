@@ -22,6 +22,7 @@ import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.events.impl.skyblock.DungeonEvent
+import gg.skytils.skytilsmod.features.impl.dungeons.catlas.handlers.DungeonDetectors.currentRoom
 import gg.skytils.skytilsmod.features.impl.funny.Funny
 import gg.skytils.skytilsmod.listeners.DungeonListener
 import gg.skytils.skytilsmod.utils.RenderUtil
@@ -120,7 +121,7 @@ object IcePathSolver {
 
     @SubscribeEvent
     fun onWorldRender(event: RenderWorldLastEvent) {
-        if (!Skytils.config.icePathSolver) return
+        if (!Skytils.config.icePathSolver || currentRoom?.data?.name != "Ice Path") return
         if (silverfishChestPos != null && roomFacing != null && grid != null && silverfish?.isEntityAlive == true) {
             GlStateManager.disableCull()
             steps.zipWithNext().forEach { (point, point2) ->

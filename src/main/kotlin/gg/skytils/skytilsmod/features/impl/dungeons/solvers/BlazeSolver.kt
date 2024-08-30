@@ -24,6 +24,7 @@ import gg.skytils.skytilsmod.Skytils.Companion.failPrefix
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.tickTimer
 import gg.skytils.skytilsmod.events.impl.skyblock.DungeonEvent
+import gg.skytils.skytilsmod.features.impl.dungeons.catlas.handlers.DungeonDetectors.currentRoom
 import gg.skytils.skytilsmod.listeners.DungeonListener
 import gg.skytils.skytilsmod.utils.RenderUtil
 import gg.skytils.skytilsmod.utils.SuperSecretSettings
@@ -189,7 +190,7 @@ object BlazeSolver {
 
     @SubscribeEvent
     fun onWorldRender(event: RenderWorldLastEvent) {
-        if (Skytils.config.blazeSolver && Utils.inDungeons && orderedBlazes.size > 0) {
+        if (Skytils.config.blazeSolver && Utils.inDungeons && orderedBlazes.size > 0  && currentRoom?.data?.name == "Ice Fill") {
             val matrixStack = UMatrixStack()
             if (blazeMode < 0) {
                 val shootableBlaze = orderedBlazes.first()
