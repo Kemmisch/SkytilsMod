@@ -190,7 +190,7 @@ object BlazeSolver {
 
     @SubscribeEvent
     fun onWorldRender(event: RenderWorldLastEvent) {
-        if (Skytils.config.blazeSolver && Utils.inDungeons && orderedBlazes.size > 0  && currentRoom?.data?.name == "Ice Fill") {
+        if (Skytils.config.blazeSolver && Utils.inDungeons && orderedBlazes.size > 0  && currentRoom?.data?.name?.contains("Blaze") == true) {
             val matrixStack = UMatrixStack()
             if (blazeMode < 0) {
                 val shootableBlaze = orderedBlazes.first()
