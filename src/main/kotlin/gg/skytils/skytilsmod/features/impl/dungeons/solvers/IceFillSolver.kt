@@ -129,7 +129,7 @@ object IceFillSolver {
 
     @SubscribeEvent
     fun onWorldRender(event: RenderWorldLastEvent) {
-        if (!Utils.inDungeons || !Skytils.config.iceFillSolver || "Ice Fill" !in DungeonListener.missingPuzzles && currentRoom?.data?.name?.contains("Blaze") == true) return
+        if (!Utils.inDungeons || !Skytils.config.iceFillSolver || "Ice Fill" !in DungeonListener.missingPuzzles && currentRoom?.data?.name == "Ice Fill") return
         val (three, five, seven) = puzzles ?: return
         val matrixStack = UMatrixStack.Compat.get()
         three.draw(matrixStack, event.partialTicks)
