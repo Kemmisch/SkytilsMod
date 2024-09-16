@@ -18,7 +18,9 @@
 
 package gg.skytils.skytilsws.client
 
+import gg.essential.universal.UChat
 import gg.skytils.skytilsmod.Reference
+import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.features.impl.dungeons.catlas.core.map.Room
 import gg.skytils.skytilsmod.features.impl.dungeons.catlas.core.map.Unknown
@@ -27,6 +29,7 @@ import gg.skytils.skytilsmod.features.impl.dungeons.catlas.utils.ScanUtils
 import gg.skytils.skytilsmod.features.impl.mining.CHWaypoints
 import gg.skytils.skytilsmod.features.impl.mining.CHWaypoints.CHInstance
 import gg.skytils.skytilsmod.features.impl.mining.CHWaypoints.chWaypointsList
+import gg.skytils.skytilsmod.listeners.DungeonListener.updateSecrets
 import gg.skytils.skytilsmod.utils.SBInfo
 import gg.skytils.skytilsws.shared.IPacketHandler
 import gg.skytils.skytilsws.shared.SkytilsWS
@@ -49,6 +52,7 @@ object PacketHandler : IPacketHandler {
             is S2CPacketAcknowledge -> {
                 if (packet.wsVersion != SkytilsWS.version) {
                     session.close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Incompatible WS version"))
+                    UChat.chat("${Skytils.failPrefix} §cIncompatible WS version. Expected ${packet.wsVersion} but you have protocol version ${SkytilsWS.version}.")
                 } else {
                     coroutineScope {
                         handleLogin(session, packet)
@@ -56,9 +60,10 @@ object PacketHandler : IPacketHandler {
                 }
             }
             is S2CPacketDungeonRoomSecret -> {
-                DungeonInfo.uniqueRooms.find { it.mainRoom.data.name == packet.roomId }?.let {
-                    if (packet.secretCount > (it.foundSecrets ?: -1)) {
-                        it.foundSecrets = packet.secretCount
+                DungeonInfo.uniqueRooms.find { it.mainRoom.data.name == packet.roomId }?.let { room ->
+                    if (packet.secretCount > (room.foundSecrets ?: -1)) {
+                        room.foundSecrets = packet.secretCount
+                        updateSecrets(room)
                     }
                 }
             }
