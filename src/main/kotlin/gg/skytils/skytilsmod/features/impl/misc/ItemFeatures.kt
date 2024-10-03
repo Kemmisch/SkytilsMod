@@ -83,6 +83,7 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent
 import org.lwjgl.input.Keyboard
 import java.awt.Color
+import kotlin.math.min
 import kotlin.math.pow
 
 object ItemFeatures {
@@ -660,11 +661,19 @@ object ItemFeatures {
                 stackTip = ItemUtil.getStarCount(extraAttributes).toString()
             }
             if (extraAttributes.hasKey("pickonimbus_durability")) {
-                RenderUtil.drawDurabilityBar(
-                    event.x,
-                    event.y,
-                    1 - extraAttributes.getInteger("pickonimbus_durability") / 5000.0
-                )
+                val durability = extraAttributes.getInteger("pickonimbus_durability")
+                /*
+                Old Pickonimbuses had 5000 durability. If they were at full durability, they were nerfed to 2000.
+                However, if they were not at full durability, they were left alone. Therefore, it's not really
+                possible to check the true max durability.
+                */
+                if (durability < 2000) {
+                    RenderUtil.drawDurabilityBar(
+                        event.x,
+                        event.y,
+                        1 - durability / 2000.0
+                    )
+                }
             }
             if (Skytils.config.showAttributeShardAbbreviation && itemId == "ATTRIBUTE_SHARD" && extraAttributes.getCompoundTag(
                     "attributes"
