@@ -45,7 +45,7 @@ object KismetProfitCommand : BaseCommand("kismetprofit", aliases = listOf("kisme
         ItemDrop(0.0, 0.08, "DARK_CLAYMORE", 150000000,100,36,1),
         ItemDrop(0.0, 0.33, "FIFTH_MASTER_STAR", 9000000,100,32,1),
         ItemDrop(0.0, 0.04, "NECRON_DYE", 10000000,100,20,1),
-        ItemDrop(0.0, 0.33, "MASTER_SKULL_TIER_5", 32000000,100,25,1)/*,
+        ItemDrop(0.0, 0.33, "MASTER_SKULL_TIER_5", 32000000,100,25,1),
         ItemDrop(5.27,5.88,"WITHER_CATALYST",2000000,16,16,1),//catalyst
         ItemDrop(5.27,5.85,"FUMING_POTATO_BOOK",2000000,17,17,1),//fuming
         ItemDrop(5.95,6.73,"WITHER_BLOOD",3000000,21,21,1),//wither blood
@@ -53,8 +53,8 @@ object KismetProfitCommand : BaseCommand("kismetprofit", aliases = listOf("kisme
         ItemDrop(15.7,17.15,"PRECURSOR_GEAR",2000000,14,14,1),//precgear
         ItemDrop(0.59,1.0,"ENCHANTED_BOOK-ULTIMATE_ONE_FOR_ALL-1",2000000,29,29,1),//ofa
         ItemDrop(0.0,0.3,"ENCHANTED_BOOK-THUNDERLORD-7",2000000,100,20,1),//TL7
-        ItemDrop(9.91,11.52,"ENCHANTED_BOOK-ULTIMATE_SOUL_EATER-1",2000000,18,18,1),//SE
-        ItemDrop(0.0,0.0,null,2000000,12,12,2),//combo2/npng
+        ItemDrop(9.91,11.52,"ENCHANTED_BOOK-ULTIMATE_SOUL_EATER-1",2000000,18,18,1)//SE
+        /*ItemDrop(0.0,0.0,null,2000000,12,12,2),//combo2/npng
         ItemDrop(0.0,0.0,null,2000000,10,10,6),//LS,UltJ,Bank,Rej3,wis,ultW
         ItemDrop(0.0,0.0,null,2000000,8,8,2),//iq/ff7
         ItemDrop(0.32,0.3,null, 2000000, 6, 6, 3),//FISH*/
