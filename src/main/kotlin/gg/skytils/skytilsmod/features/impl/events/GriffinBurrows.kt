@@ -629,7 +629,7 @@ object GriffinBurrows {
 
     class MythoMobDisplay : GuiElement("Mytho Mob Health Display",x = 0.5F,y = 0.5F) {
         override fun render() {
-            if (toggled && Utils.inSkyblock && SBInfo.mode == SkyblockIsland.Hub.mode) {
+            if (toggled && Utils.inSkyblock && SBInfo.mode == SkyblockIsland.Hub.mode && Utils.isMytho) {
                 val text = ArrayList<String>()
                 if (Skytils.config.lastInqInfo && System.currentTimeMillis() - lastInq.spawnTime < 1000*60*60*3) {
                     text.add("Last Inq: §b${lastInq.spawner} §8@ ${(-lastInq.spawnTime+System.currentTimeMillis()).milliseconds.toComponents { hours, minutes, seconds, _ ->
