@@ -46,17 +46,8 @@ object QuickWarp {
     enum class ReasonPriorities (val reason: String, val priority: Long) {
         INQUISITOR("inq",1L),
         BURROW_GUESS("burrow",2L),
-        GARDEN_HOME("garden",1L),
-        GARDEN_PLOT_4("plot4",2L),
         TRAPPER_DESERT("desert",1L),
         TRAPPER_TREVOR("trevor",1L),
-        TUNNELS_CAMPFIRE("campfire",1L),
-        MINES_EVENT("dmevent",2L),
-        DARK_AUCTION("darkauction",3L),
-        NEW_YEARS("newyear",4L),
-        NUCLEUS("nucleus",1L),
-        FINNEGAN("finnegan",5L),
-        JERRY("jerry",6L),
         LOWEST("lowest",Long.MAX_VALUE);
 
         companion object {
