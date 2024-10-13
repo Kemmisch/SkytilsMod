@@ -43,16 +43,16 @@ object PartyAddons {
 
     private val youJoinedPartyRegex = Regex("§eYou have joined §r(?<rank>§.(\\S*)?) ?(?<name>[^']*)'s §r§eparty!§r")
     private val receievedMessageRegex = Regex("§dFrom §?r?(?<rank>§.(\\S*)?) ?(?<name>[^§]*)§r§7: §r§7(?<text>[^§]*)§r")
-    private val otherJoinedPartyRegex = Regex("(?<rank>§.(\\S*)?) ?(?<name>\\S*) §r§ejoined the party.§r")
-    private val transferRegex = Regex("§eThe party was transferred to §r(?<rankTo>§.(\\S*)?) ?(?<nameTo>\\S*) §r§eby §r(?<rankFrom>§.(\\S*)?) ?(?<nameFrom>[^§]*)§r")
+    private val otherJoinedPartyRegex = Regex("(?<rank>§.(\\S*)?) ?(?<name>\\w*) §r§ejoined the party.§r")
+    private val transferRegex = Regex("§eThe party was transferred to §r(?<rankTo>§.(\\S*)?) ?(?<nameTo>\\w) §r§eby §r(?<rankFrom>§.(\\S*)?) ?(?<nameFrom>[^§]*)§r")
     private val demoteRegex = Regex("(?<rankDemoter>§.(\\S*)?) ?(?<demoter>[^§]*)§r§e has demoted §?.?(?<rankDemotee>§.(\\S*)?) ?(?<demotee>[^§]*)§r§eto Party (?<newRole>[^§]*)§r")
     private val promoteRegex = Regex("(?<rankPromoter>§.(\\S*)?) ?(?<promoter>[^§]*)§r§e has promoted §?.?(?<rankPromotee>§.(\\S*)?) ?(?<promotee>[^§]*)§r§eto Party (?<newRole>[^§]*)§r")
     private val youLeftPartyString = "§eYou left the party.§r"
     private val emptyPartyDisbandString = "§cThe party was disbanded because all invites expired and the party was empty.§r"
-    private val forceDisbandRegex = Regex("(?<rank>§.(\\S*)?) ?(?<name>\\S*) §r§ehas disbanded the party!§r")
+    private val forceDisbandRegex = Regex("(?<rank>§.(\\S*)?) ?(?<name>\\w) §r§ehas disbanded the party!§r")
     private val partyMessageRegex = Regex("§r§9Party §8> (?<rank>§.(\\S*)?) ?(?<name>[^§]*)§f: §r(?<text>[^§]*)§r")
     private val partyFinderRegex = Regex("^Party Finder > (?<name>\\w+) joined the dungeon group! \\((?<class>Archer|Berserk|Mage|Healer|Tank) Level (?<classLevel>\\d+)\\)$")
-    private val inviteOtherRegex = Regex("(?<rankInviter>§.(\\S*)?) ?(?<nameInviter>\\S*) §r§einvited §r(?<rankInvited>§.(\\S*)?) ?(?<nameInvited>\\S*) §r§eto the party! They have §r§c60 §r§eseconds to accept.§r")
+    private val inviteOtherRegex = Regex("(?<rankInviter>§.(\\S*)?) ?(?<nameInviter>\\w) §r§einvited §r(?<rankInvited>§.(\\S*)?) ?(?<nameInvited>\\w) §r§eto the party! They have §r§c60 §r§eseconds to accept.§r")
 
     private var inParty = false
     private var isLeader = false
@@ -268,13 +268,16 @@ object PartyAddons {
             val promoteMessage = promoteRegex.find(message)
             if (promoteMessage?.groups?.get("promotee")?.value == mc.thePlayer.name) {
                 inParty = true
-                if (promoteMessage?.groups?.get("promotee")?.value == "Leader") {
+                if (promoteMessage?.groups?.get("newRole")?.value == "Leader") {
                     isLeader = true
                     isMod = false
                 } else {
                     isLeader = false
                     isMod = true
                 }
+            } else if (promoteMessage?.groups?.get("promotee")?.value == mc.thePlayer.name && promoteMessage?.groups?.get("newRole")?.value == "Leader") {
+                isLeader = false
+                isMod = true
             }
         } else if (message.matches(inviteOtherRegex)) {
             val inviteMessage = inviteOtherRegex.find(message)
@@ -310,7 +313,7 @@ object PartyAddons {
 
     private fun handlePartyCommand(args: List<String>, name: String) {
         if (args[0] == "cf" && inParty) {
-            Skytils.sendMessageQueue.add("/pc $name flipped ${if (nextBoolean()) "heads" else "tails"}")
+            Skytils.sendMessageQueue.add("/pc $name flipped ${if (nextBoolean()) "Heads" else "Tails"}")
         } else if (args[0] == "roll" && inParty) {
             if (args.size == 1) {
                 Skytils.sendMessageQueue.add("/pc $name rolled a ${nextInt(1,6)}")
@@ -340,6 +343,12 @@ object PartyAddons {
             Skytils.sendMessageQueue.add("/p settings allinvite")
         } else if (args[0] == "warp" && inParty && isLeader) {
             Skytils.sendMessageQueue.add("/p warp")
+        } else if (args[0] == "kickoffline" && inParty && isLeader) {
+            Skytils.sendMessageQueue.add("/p kickoffline")
+        } else if (args[0] == "lbsw" && inParty && isLeader) {
+            Skytils.sendMessageQueue.add("/play solo_insane_lucky")
+        } else if (args[0] == "play" && inParty && isLeader && args.size == 2) {
+            Skytils.sendMessageQueue.add("/play ${args[1]}")
         } else {
             if (!isLeader || !inParty) return
             processCommand(mc.thePlayer, args.toTypedArray())
