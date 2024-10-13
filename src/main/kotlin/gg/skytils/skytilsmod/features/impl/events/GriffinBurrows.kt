@@ -25,6 +25,7 @@ import gg.skytils.skytilsmod.Skytils.Companion.mc
 import gg.skytils.skytilsmod.core.GuiManager
 import gg.skytils.skytilsmod.core.SoundQueue
 import gg.skytils.skytilsmod.core.structure.GuiElement
+import gg.skytils.skytilsmod.events.impl.GuiContainerEvent
 import gg.skytils.skytilsmod.events.impl.MainReceivePacketEvent
 import gg.skytils.skytilsmod.events.impl.PacketEvent
 import gg.skytils.skytilsmod.features.impl.events.GriffinBurrows.BurrowEstimation.lastParticleTrail
@@ -35,7 +36,6 @@ import gg.skytils.skytilsmod.features.impl.misc.QuickWarp.pushWarp
 import gg.skytils.skytilsmod.utils.*
 import gg.skytils.skytilsmod.utils.ItemUtil.getItemLore
 import gg.skytils.skytilsmod.utils.graphics.ScreenRenderer
-import net.minecraft.client.gui.inventory.GuiChest
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.entity.item.EntityArmorStand
 import net.minecraft.init.Blocks
@@ -49,7 +49,6 @@ import net.minecraft.network.play.server.S29PacketSoundEffect
 import net.minecraft.network.play.server.S2APacketParticles
 import net.minecraft.util.*
 import net.minecraftforge.client.event.ClientChatReceivedEvent
-import net.minecraftforge.client.event.GuiOpenEvent
 import net.minecraftforge.client.event.RenderWorldLastEvent
 import net.minecraftforge.event.world.WorldEvent
 import net.minecraftforge.fml.common.eventhandler.EventPriority
@@ -74,31 +73,34 @@ object GriffinBurrows {
     var hasSpadeInHotbar = false
     var lastSpadeUse = -1L
     var lastInq = Inquisitor(Vec3(-2.5, 70.0, -69.5), 0,"null")
-    var allowedWarps = linkedMapOf(Pair("Hub",true),Pair("Castle",false),Pair("Crypts",false),Pair("Museum",false),Pair("Wizard",false),Pair("Sirius",false))
     var menuOpened = false
 
-    enum class WarpLocations (val coords: Vec3, val warpName: String, val displayName: String) {
-        HUB( Vec3(-3.5, 70.5, -70.5),"hub","§bHub"),
-        CASTLE( Vec3(-250.5, 130.5, 45.5), "castle", "§8Castle"),
-        CRYPTS( Vec3(-162.5, 61.5, -100.5), "crypts", "§cCrypts"),
-        MUSEUM( Vec3(-76.5, 76.5, 80.5), "museum", "§9Museum"),
-        WIZARD( Vec3(42.5, 122.5, 69.5), "wizard", "§dWizard"),
-        SIRIUS( Vec3(91.5, 75.5, 173.5), "da", "§5Sirius");
+    enum class WarpLocation (val coords: Vec3, val cmdName: String, val displayName: String, val warpName: String, var allowed: Boolean) {
+        HUB( Vec3(-3.5, 70.5, -70.5),"hub","§bHub","Hub",true),
+        CASTLE( Vec3(-250.5, 130.5, 45.5), "castle", "§8Castle","Castle",false),
+        CRYPTS( Vec3(-162.5, 61.5, -100.5), "crypt", "§cCrypts","Crypts",false),
+        MUSEUM( Vec3(-76.5, 76.5, 80.5), "museum", "§9Museum","Museum",false),
+        WIZARD( Vec3(42.5, 122.5, 69.5), "wizard_tower", "§dWizard","Wizard",false),
+        SIRIUS( Vec3(91.5, 75.5, 173.5), "da", "§5Sirius","Sirius",false);
 
         companion object {
-            fun getClosest (guess: Vec3,player: Vec3, allowedWarps: LinkedHashMap<String, Boolean>): WarpLocations? {
-                var closest = HUB
-                for (warp in WarpLocations.entries) {
-                    //UChat.chat("compared")
-                    if ((allowedWarps[warp.displayName] == true) && closest != warp && (closest.coords.getXZDistSq(guess) > warp.coords.getXZDistSq(guess)))
-                        closest = warp
+            fun getClosest (guess: Vec3,player: Vec3): WarpLocation? {
+                var closest: WarpLocation? = HUB
+                WarpLocation.entries.forEach {
+                    if (it.allowed && closest != it) {
+                        if (closest!!.coords.getXZDistSq(guess) > it.coords.getXZDistSq(guess)) {
+                            closest = it
+                        }
+                    }
                 }
-                UChat.chat(closest.coords.getXZDistSq(guess) > guess.getXZDistSq(player))
-                return if (closest.coords.getXZDistSq(guess) > guess.getXZDistSq(player)) null else closest
+                if (closest!!.coords.getXZDistSq(guess) > player.getXZDistSq(guess)) {
+                    closest = null
+                }
+                return closest
             }
-
-            fun getFromDisplayName(name: String): WarpLocations? {
-                return WarpLocations.entries.find {it.displayName == name}
+            
+            fun getFromCmdName(name: String): WarpLocation? {
+                return WarpLocation.entries.find {it.cmdName == name}
             }
         }
     }
@@ -131,27 +133,24 @@ object GriffinBurrows {
     }
 
     @SubscribeEvent
-    fun onGuiOpen(event: GuiOpenEvent) {
-        if (event.gui !is GuiChest || !Utils.inSkyblock || !(Skytils.config.inquisitorQuickWarp || Skytils.config.burrowEstimationQuickWarp) || mc.thePlayer == null) return else {
-            val container = (event.gui as GuiChest).inventorySlots as ContainerChest
-            val containerName = container.lowerChestInventory.displayName.unformattedText
+    fun onGuiOpen(event: GuiContainerEvent.ForegroundDrawnEvent) {
+        if (event.container !is ContainerChest || !Utils.inSkyblock || !(Skytils.config.inquisitorQuickWarp || Skytils.config.burrowEstimationQuickWarp) || mc.thePlayer == null || menuOpened) return
+            val containerName = event.container.lowerChestInventory.displayName.unformattedText
             //Code borrowed from SoopyV2 by @Soopyboo32
             if (containerName.startsWith("Hub Warps")) {
-                for (item in container.inventoryItemStacks) {
-                    val lore = getItemLore(item ?: continue)
-                    if (lore.size < 2) continue
-                    val warpLine = lore[1].stripControlCodes()
-                    if (warpLine.startsWith("/warp")) {
-                        warpLine.replace("/warp","")
-                        if (lore.find {it.contains("Click to warp!")} != null) {
-                            allowedWarps[warpLine] = true
-                        }
+                val inv = event.container.lowerChestInventory
+                for (i in 0..<inv.sizeInventory) {
+                    val item = inv.getStackInSlot(i) ?: continue
+                    if (item.unlocalizedName != "item.paper") continue
+                    var warpLine = getItemLore(item)[0].stripControlCodes()
+                    if (warpLine.contains("/warp")) {
+                        warpLine = warpLine.replace("/warp ","")
+                        WarpLocation.getFromCmdName(warpLine)?.allowed = true
                     }
                 }
                 menuOpened = true
-                //allowedWarps.forEach {UChat.chat(it.toString())}
             }
-        }
+
     }
 
     @SubscribeEvent
@@ -231,10 +230,10 @@ object GriffinBurrows {
                 if (!menuOpened) UChat.chat("${Skytils.failPrefix} Open the hub warp menu for burrow warps to work!")
                 else {
                     UChat.chat("Pushed warp?")
-                    val warpLoc = WarpLocations.getClosest(Vec3(guessPos.x, 0.0,guessPos.z),mc.thePlayer.positionVector, allowedWarps) ?: return
+                    val warpLoc = WarpLocation.getClosest(Vec3(guessPos.x, 0.0,guessPos.z),mc.thePlayer.positionVector) ?: return
                     pushWarp(
                         QuickWarp.Warp(
-                            warpLoc.warpName,
+                            warpLoc.cmdName,
                             SkyblockIsland.Hub.mode,
                             System.currentTimeMillis(),
                             5000,
@@ -292,11 +291,11 @@ object GriffinBurrows {
                 if (Skytils.config.burrowEstimationQuickWarp) {
                     if (!menuOpened) UChat.chat("${Skytils.failPrefix} Open the hub warp menu for burrow warps to work!")
                     else {
-                        val warpLoc = WarpLocations.getClosest(Vec3(lastInq.coords.x, 0.0,lastInq.coords.z),mc.thePlayer.positionVector, allowedWarps) ?: return
+                        val warpLoc = WarpLocation.getClosest(Vec3(lastInq.coords.x, 0.0,lastInq.coords.z),mc.thePlayer.positionVector) ?: return
                         UChat.chat("Pushed warp?")
                         pushWarp(
                             QuickWarp.Warp(
-                                warpLoc.warpName,
+                                warpLoc.cmdName,
                                 SkyblockIsland.Hub.mode,
                                 System.currentTimeMillis(),
                                 5000,
@@ -391,6 +390,7 @@ object GriffinBurrows {
     fun onWorldChange(event: WorldEvent.Unload) {
         particleBurrows.clear()
         recentlyDugParticleBurrows.clear()
+        menuOpened=false
     }
 
     @SubscribeEvent
@@ -488,10 +488,10 @@ object GriffinBurrows {
                     if (!menuOpened) UChat.chat("${Skytils.failPrefix} Open the hub warp menu for burrow warps to work!")
                     else {
                         UChat.chat("Pushed warp?")
-                        val warpLoc = WarpLocations.getClosest(Vec3(guessPos.x, 0.0,guessPos.z),mc.thePlayer.positionVector, allowedWarps) ?: return
+                        val warpLoc = WarpLocation.getClosest(Vec3(guessPos.x, 0.0,guessPos.z),mc.thePlayer.positionVector) ?: return
                         pushWarp(
                             QuickWarp.Warp(
-                                warpLoc.warpName,
+                                warpLoc.cmdName,
                                 SkyblockIsland.Hub.mode,
                                 System.currentTimeMillis(),
                                 5000,
