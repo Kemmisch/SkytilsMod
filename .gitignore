@@ -118,3 +118,9 @@ run/
 !gradle-wrapper.jar
 
 .vscode/
+build.gradle.kts
+build.gradle.kts
+gradle/wrapper/gradle-wrapper.jar
+gradle/wrapper/gradle-wrapper.properties
+gradlew
+gradlew.bat
