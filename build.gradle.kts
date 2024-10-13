@@ -43,7 +43,8 @@ repositories {
     maven("https://repo.sk1er.club/repository/maven-public/")
     maven("https://repo.sk1er.club/repository/maven-releases/")
     maven("https://repo.hypixel.net/repository/Hypixel/")
-    maven("https://jitpack.io") {
+    maven("https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1")
+maven("https://jitpack.io") {
         mavenContent {
             includeGroupAndSubgroups("com.github")
         }
@@ -164,6 +165,8 @@ dependencies {
     shadowMe(annotationProcessor("io.github.llamalad7:mixinextras-common:0.5.0-beta.2")!!)
     annotationProcessor("org.spongepowered:mixin:0.8.7:processor")
     compileOnly("org.spongepowered:mixin:0.8.5")
+
+    modRuntimeOnly("me.djtheredstoner:DevAuth-forge-legacy:1.2.1")
 }
 
 sourceSets {
