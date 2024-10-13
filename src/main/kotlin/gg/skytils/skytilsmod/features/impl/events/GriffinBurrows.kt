@@ -32,7 +32,7 @@ import gg.skytils.skytilsmod.features.impl.events.GriffinBurrows.BurrowEstimatio
 import gg.skytils.skytilsmod.features.impl.events.GriffinBurrows.BurrowEstimation.lastSoundTrail
 import gg.skytils.skytilsmod.features.impl.events.GriffinBurrows.BurrowEstimation.otherGrassData
 import gg.skytils.skytilsmod.features.impl.misc.QuickWarp
-import gg.skytils.skytilsmod.features.impl.misc.QuickWarp.pushWarp
+import gg.skytils.skytilsmod.features.impl.misc.QuickWarp.setWarp
 import gg.skytils.skytilsmod.utils.*
 import gg.skytils.skytilsmod.utils.ItemUtil.getItemLore
 import gg.skytils.skytilsmod.utils.graphics.ScreenRenderer
@@ -63,28 +63,35 @@ import kotlin.time.Duration.Companion.milliseconds
 
 object GriffinBurrows {
 
-    data class Inquisitor(var coords: Vec3, val spawnTime: Long, val spawner: String)
+    data class Inquisitor(var coords: Vec3, val spawnTime: Long, val spawner: String?)
 
     val particleBurrows = hashMapOf<BlockPos, ParticleBurrow>()
     var lastDugParticleBurrow: BlockPos? = null
     val recentlyDugParticleBurrows = EvictingQueue.create<BlockPos>(5)
-    val coordsRegex = Regex("§r§9Party §8> (?<rank>§.(\\[.*])?) ?(?<name>[^ §]{2,16})§f: §r[ xX:]{0,4}(?<x>[\\d-.]{1,7})[, yY:]{1,5}(?<y>[\\d-.]{1,7})[, zZ:]{1,5}(?<z>[\\d-.]{1,7}),? ?§?r?")
+    val coordsRegex =
+        Regex("§r§9P(arty)? §8> (?<rank>§.\\S*) ?(?<name>[^ §]{2,16})§f: §r[ xX:]{0,4}(?<x>[\\d-.]{1,7})[, yY:]{1,5}(?<y>[\\d-.]{1,7})[, zZ:]{1,5}(?<z>[\\d-.]{1,7}),? ?§?r?")
 
     var hasSpadeInHotbar = false
     var lastSpadeUse = -1L
-    var lastInq = Inquisitor(Vec3(-2.5, 70.0, -69.5), 0,"null")
+    var lastInq = Inquisitor(Vec3(-2.5, 70.0, -69.5), 0, null)
     var menuOpened = false
 
-    enum class WarpLocation (val coords: Vec3, val cmdName: String, val displayName: String, val warpName: String, var allowed: Boolean) {
-        HUB( Vec3(-3.5, 70.5, -70.5),"hub","§bHub","Hub",true),
-        CASTLE( Vec3(-250.5, 130.5, 45.5), "castle", "§8Castle","Castle",false),
-        CRYPTS( Vec3(-162.5, 61.5, -100.5), "crypt", "§cCrypts","Crypts",false),
-        MUSEUM( Vec3(-76.5, 76.5, 80.5), "museum", "§9Museum","Museum",false),
-        WIZARD( Vec3(42.5, 122.5, 69.5), "wizard_tower", "§dWizard","Wizard",false),
-        SIRIUS( Vec3(91.5, 75.5, 173.5), "da", "§5Sirius","Sirius",false);
+    enum class WarpLocation(
+        val coords: Vec3,
+        val cmdName: String,
+        val displayName: String,
+        val warpName: String,
+        var allowed: Boolean
+    ) {
+        HUB(Vec3(-3.5, 70.5, -70.5), "hub", "§bHub", "Hub", true),
+        CASTLE(Vec3(-250.5, 130.5, 45.5), "castle", "§8Castle", "Castle", false),
+        CRYPTS(Vec3(-162.5, 61.5, -100.5), "crypt", "§cCrypts", "Crypts", false),
+        MUSEUM(Vec3(-76.5, 76.5, 80.5), "museum", "§9Museum", "Museum", false),
+        WIZARD(Vec3(42.5, 122.5, 69.5), "wizard_tower", "§dWizard", "Wizard", false),
+        SIRIUS(Vec3(91.5, 75.5, 173.5), "da", "§5Sirius", "Sirius", false);
 
         companion object {
-            fun getClosest (guess: Vec3,player: Vec3): WarpLocation? {
+            fun getClosest(guess: Vec3, player: Vec3): WarpLocation? {
                 var closest: WarpLocation? = HUB
                 WarpLocation.entries.forEach {
                     if (it.allowed && closest != it) {
@@ -93,14 +100,11 @@ object GriffinBurrows {
                         }
                     }
                 }
-                if (closest!!.coords.getXZDistSq(guess) > player.getXZDistSq(guess)) {
-                    closest = null
-                }
-                return closest
+                return if (closest!!.coords.getXZDistSq(guess) > player.getXZDistSq(guess)) null else closest
             }
-            
+
             fun getFromCmdName(name: String): WarpLocation? {
-                return WarpLocation.entries.find {it.cmdName == name}
+                return WarpLocation.entries.find { it.cmdName == name }
             }
         }
     }
@@ -133,23 +137,30 @@ object GriffinBurrows {
     }
 
     @SubscribeEvent
-    fun onGuiOpen(event: GuiContainerEvent.ForegroundDrawnEvent) {
+    fun onGuiDrawn(event: GuiContainerEvent.ForegroundDrawnEvent) {
         if (event.container !is ContainerChest || !Utils.inSkyblock || !(Skytils.config.inquisitorQuickWarp || Skytils.config.burrowEstimationQuickWarp) || mc.thePlayer == null || menuOpened) return
-            val containerName = event.container.lowerChestInventory.displayName.unformattedText
-            //Code borrowed from SoopyV2 by @Soopyboo32
-            if (containerName.startsWith("Hub Warps")) {
-                val inv = event.container.lowerChestInventory
-                for (i in 0..<inv.sizeInventory) {
-                    val item = inv.getStackInSlot(i) ?: continue
-                    if (item.unlocalizedName != "item.paper") continue
-                    var warpLine = getItemLore(item)[0].stripControlCodes()
-                    if (warpLine.contains("/warp")) {
-                        warpLine = warpLine.replace("/warp ","")
-                        WarpLocation.getFromCmdName(warpLine)?.allowed = true
-                    }
-                }
-                menuOpened = true
+        val containerName = event.container.lowerChestInventory.displayName.unformattedText
+        //Code borrowed from SoopyV2 by @Soopyboo32
+        if (containerName.startsWith("Hub Warps")) {
+            val warpItems = event.container.inventorySlots.filterNotNull().filter { it.stack.item == Items.paper }
+            warpItems.forEach {
+                val warpLoc = getItemLore(it.stack).firstOrNull().stripControlCodes().replace("/warp ", "")
+                WarpLocation.getFromCmdName(warpLoc)?.allowed = true
             }
+
+
+            /*val inv = event.container.lowerChestInventory
+            for (i in 0..<inv.sizeInventory) {
+                val item = inv.getStackInSlot(i) ?: continue
+                if (item.unlocalizedName != "item.paper") continue
+                var warpLine = getItemLore(item)[0].stripControlCodes()
+                if (warpLine.contains("/warp")) {
+                    warpLine = warpLine.replace("/warp ","")
+                    WarpLocation.getFromCmdName(warpLine)?.allowed = true
+                }
+            }*/
+            menuOpened = true
+        }
 
     }
 
@@ -219,7 +230,11 @@ object GriffinBurrows {
 
             fun getIndex(x: Int, z: Int) = (x - -281) + (z - -233) * (195 - -281 + 1)
 
-            val guess = BurrowGuess(guessPos.x.toInt(), otherGrassData.getOrNull(getIndex(guessPos.x.toInt(), guessPos.z.toInt()))?.toInt() ?: 0, guessPos.z.toInt())
+            val guess = BurrowGuess(
+                guessPos.x.toInt(),
+                otherGrassData.getOrNull(getIndex(guessPos.x.toInt(), guessPos.z.toInt()))?.toInt() ?: 0,
+                guessPos.z.toInt()
+            )
             BurrowEstimation.guesses[guess] = Instant.now()
 
             lastParticleTrail.clear()
@@ -230,8 +245,10 @@ object GriffinBurrows {
                 if (!menuOpened) UChat.chat("${Skytils.failPrefix} Open the hub warp menu for burrow warps to work!")
                 else {
                     UChat.chat("Pushed warp?")
-                    val warpLoc = WarpLocation.getClosest(Vec3(guessPos.x, 0.0,guessPos.z),mc.thePlayer.positionVector) ?: return
-                    pushWarp(
+                    val warpLoc =
+                        WarpLocation.getClosest(Vec3(guessPos.x, 0.0, guessPos.z), mc.thePlayer.positionVector)
+                            ?: return
+                    setWarp(
                         QuickWarp.Warp(
                             warpLoc.cmdName,
                             SkyblockIsland.Hub.mode,
@@ -277,41 +294,48 @@ object GriffinBurrows {
             lastSpadeUse = -1
             lastSoundTrail.clear()
         }
-        if (coordsRegex.matches(event.message.formattedText)) {
-            val coordsPartyMessage = coordsRegex.find(event.message.formattedText)
-            val senderName = coordsPartyMessage?.groups?.get("name")?.value?.trim() ?: return
+        if (coordsRegex.matches(event.message.formattedText) && Skytils.config.drawInquisitorCoords) {
+            val coordsPartyMessage = coordsRegex.find(event.message.formattedText) ?: return
+            val senderName = coordsPartyMessage.groups.get("name")?.value?.trim() ?: return
             val senderRank = coordsPartyMessage.groups.get("rank")!!.value.trim()
 
-            lastInq = Inquisitor(Vec3(coordsPartyMessage.groups.get("x")?.value?.trim()?.toDoubleOrNull() ?: return,
-                coordsPartyMessage.groups.get("y")?.value?.trim()?.toDoubleOrNull() ?: return,
-                coordsPartyMessage.groups.get("z")?.value?.trim()?.toDoubleOrNull() ?: return),System.currentTimeMillis(),senderName)
+            lastInq = Inquisitor(
+                Vec3(
+                    coordsPartyMessage.groups.get("x")?.value?.trim()?.toDoubleOrNull() ?: return,
+                    coordsPartyMessage.groups.get("y")?.value?.trim()?.toDoubleOrNull() ?: return,
+                    coordsPartyMessage.groups.get("z")?.value?.trim()?.toDoubleOrNull() ?: return
+                ), System.currentTimeMillis(), senderName
+            )
             UChat.chat("§6Inquisitor §ffound by $senderRank $senderName§r")
-            if (senderName == mc.thePlayer.name || !Skytils.config.drawInquisitorCoords) return
+            if (senderName == mc.thePlayer.name) return
             if (Skytils.config.inquisitorQuickWarp) {
-                if (Skytils.config.burrowEstimationQuickWarp) {
-                    if (!menuOpened) UChat.chat("${Skytils.failPrefix} Open the hub warp menu for burrow warps to work!")
-                    else {
-                        val warpLoc = WarpLocation.getClosest(Vec3(lastInq.coords.x, 0.0,lastInq.coords.z),mc.thePlayer.positionVector) ?: return
-                        UChat.chat("Pushed warp?")
-                        pushWarp(
-                            QuickWarp.Warp(
-                                warpLoc.cmdName,
-                                SkyblockIsland.Hub.mode,
-                                System.currentTimeMillis(),
-                                5000,
-                                "inq",
-                                warpLoc.displayName
-                            )
+                if (!menuOpened) UChat.chat("${Skytils.failPrefix} Open the hub warp menu for burrow warps to work!")
+                else {
+                    val warpLoc = WarpLocation.getClosest(
+                        Vec3(lastInq.coords.x, 0.0, lastInq.coords.z),
+                        mc.thePlayer.positionVector
+                    ) ?: return
+                    setWarp(
+                        QuickWarp.Warp(
+                            warpLoc.cmdName,
+                            SkyblockIsland.Hub.mode,
+                            System.currentTimeMillis(),
+                            5000,
+                            "inq",
+                            warpLoc.displayName
                         )
-                        UChat.chat("Warp pushed.")
-                    }
+                    )
                 }
+
             }
-            GuiManager.createTitle("§6[§r§b§kr§r§6]§r §3$senderName's§r §6Inquisitor [§r§b§kr§r§6]§r",100)
+            GuiManager.createTitle("§6[§r§b§kr§r§6]§r §3$senderName's§r §6Inquisitor [§r§b§kr§r§6]§r", 100)
         }
-        if (Skytils.config.sendInquisitorCoords && (event.message.formattedText.contains("\$INQ\$") || (event.message.formattedText.contains("§r§eYou dug out ") && event.message.unformattedText.contains("Inquis")))) {
+        if (Skytils.config.sendInquisitorCoords && (event.message.formattedText.contains("\$INQ\$") || (event.message.formattedText.contains(
+                "§r§eYou dug out "
+            ) && event.message.unformattedText.contains("Inquis")))
+        ) {
             Skytils.sendMessageQueue.add("/pc x: ${mc.thePlayer.posX.toInt()}, y: ${mc.thePlayer.posY.toInt()}, z: ${mc.thePlayer.posZ.toInt()}")
-            GuiManager.createTitle("§6[§r§b§kr§r§6]§r §3${mc.thePlayer.name}'s§r §6Inquisitor [§r§b§kr§r§6]§r",100)
+            GuiManager.createTitle("§6[§r§b§kr§r§6]§r §3${mc.thePlayer.name}'s§r §6Inquisitor [§r§b§kr§r§6]§r", 100)
         }
     }
 
@@ -332,6 +356,7 @@ object GriffinBurrows {
                     event.packet is C07PacketPlayerDigging && event.packet.status == C07PacketPlayerDigging.Action.START_DESTROY_BLOCK -> {
                         event.packet.position
                     }
+
                     event.packet is C08PacketPlayerBlockPlacement && event.packet.stack != null -> event.packet.position
                     else -> return
                 }
@@ -373,8 +398,12 @@ object GriffinBurrows {
                 }
             }
         }
-        if (lastInq.spawner != mc.thePlayer.name && Skytils.config.drawInquisitorCoords && (System.currentTimeMillis() - lastInq.spawnTime) < 30000 && mc.thePlayer.position.distanceSq(Vec3i(
-                    lastInq.coords.x.toInt(), lastInq.coords.y.toInt(), lastInq.coords.z.toInt())) >= 144) {
+        if (lastInq.spawner != mc.thePlayer.name && Skytils.config.drawInquisitorCoords && (System.currentTimeMillis() - lastInq.spawnTime) < 30000 && mc.thePlayer.position.distanceSq(
+                Vec3i(
+                    lastInq.coords.x.toInt(), lastInq.coords.y.toInt(), lastInq.coords.z.toInt()
+                )
+            ) >= 144
+        ) {
             val matrixStack = UMatrixStack()
             RenderUtil.draw3DLine(
                 lastInq.coords,
@@ -436,6 +465,7 @@ object GriffinBurrows {
                     }
                 }
             }
+
             is S04PacketEntityEquipment -> {
                 if (!Skytils.config.burrowEstimation || SBInfo.mode != SkyblockIsland.Hub.mode || Skytils.config.experimentBurrowEstimation) return
                 val entity = mc.theWorld?.getEntityByID(event.packet.entityID)
@@ -449,17 +479,27 @@ object GriffinBurrows {
                         0.0,
                         cos(yaw)
                     )
-                    val offset = Vec3(-sin(yaw + PI/2), 0.0, cos(yaw + PI/2)) * 0.9
+                    val offset = Vec3(-sin(yaw + PI / 2), 0.0, cos(yaw + PI / 2)) * 0.9
                     val origin = armorStand.positionVector.add(offset)
                     BurrowEstimation.arrows.put(BurrowEstimation.Arrow(lookVec, origin), Instant.now())
                 }
             }
+
             is S29PacketSoundEffect -> {
                 if (!Skytils.config.burrowEstimation || SBInfo.mode != SkyblockIsland.Hub.mode) return
                 if (event.packet.soundName != "note.harp" || event.packet.volume != 1f) return
-                printDevMessage("Found note harp sound ${event.packet.pitch} ${event.packet.volume} ${event.packet.x} ${event.packet.y} ${event.packet.z}", "griffinguess")
+                printDevMessage(
+                    "Found note harp sound ${event.packet.pitch} ${event.packet.volume} ${event.packet.x} ${event.packet.y} ${event.packet.z}",
+                    "griffinguess"
+                )
                 if (lastSpadeUse != -1L && System.currentTimeMillis() - lastSpadeUse < 1000) {
-                    lastSoundTrail.add(Vec3(event.packet.x, event.packet.y, event.packet.z) to event.packet.pitch.toDouble())
+                    lastSoundTrail.add(
+                        Vec3(
+                            event.packet.x,
+                            event.packet.y,
+                            event.packet.z
+                        ) to event.packet.pitch.toDouble()
+                    )
                 }
                 if (Skytils.config.experimentBurrowEstimation) return
                 val (arrow, distance) = BurrowEstimation.arrows.keys
@@ -488,8 +528,10 @@ object GriffinBurrows {
                     if (!menuOpened) UChat.chat("${Skytils.failPrefix} Open the hub warp menu for burrow warps to work!")
                     else {
                         UChat.chat("Pushed warp?")
-                        val warpLoc = WarpLocation.getClosest(Vec3(guessPos.x, 0.0,guessPos.z),mc.thePlayer.positionVector) ?: return
-                        pushWarp(
+                        val warpLoc =
+                            WarpLocation.getClosest(Vec3(guessPos.x, 0.0, guessPos.z), mc.thePlayer.positionVector)
+                                ?: return
+                        setWarp(
                             QuickWarp.Warp(
                                 warpLoc.cmdName,
                                 SkyblockIsland.Hub.mode,
@@ -531,7 +573,14 @@ object GriffinBurrows {
                 (0.1f + 0.005f * distSq.toFloat()).coerceAtLeast(0.2f)
             )
             GlStateManager.disableTexture2D()
-            if (distSq > 5 * 5) RenderUtil.renderBeaconBeam(renderX, renderY + 1, renderZ, this.color.rgb, 1.0f, partialTicks)
+            if (distSq > 5 * 5) RenderUtil.renderBeaconBeam(
+                renderX,
+                renderY + 1,
+                renderZ,
+                this.color.rgb,
+                1.0f,
+                partialTicks
+            )
             RenderUtil.renderWaypointText(
                 waypointText,
                 x + 0.5,
@@ -579,10 +628,12 @@ object GriffinBurrows {
                         waypointText = "§aStart §a(Particle)"
                         color = Skytils.config.emptyBurrowColor
                     }
+
                     1 -> {
                         waypointText = "§cMob §a(Particle)"
                         color = Skytils.config.mobBurrowColor
                     }
+
                     2 -> {
                         waypointText = "§6Treasure §a(Particle)"
                         color = Skytils.config.treasureBurrowColor
@@ -596,6 +647,7 @@ object GriffinBurrows {
         override var color = Color.WHITE
             private set
     }
+
     private val ItemStack?.isSpade
         get() = ItemUtil.getSkyBlockItemID(this) == "ANCESTRAL_SPADE"
 
@@ -627,36 +679,48 @@ object GriffinBurrows {
         }
     }
 
-    class MythoMobDisplay : GuiElement("Mytho Mob Health Display",x = 0.5F,y = 0.5F) {
+    class MythoMobDisplay : GuiElement("Mytho Mob Health Display", x = 0.5F, y = 0.5F) {
         override fun render() {
-            if (toggled && Utils.inSkyblock && SBInfo.mode == SkyblockIsland.Hub.mode && Utils.isMytho) {
-                val text = ArrayList<String>()
-                if (Skytils.config.lastInqInfo && System.currentTimeMillis() - lastInq.spawnTime < 1000*60*60*3) {
-                    text.add("Last Inq: §b${lastInq.spawner} §8@ ${(-lastInq.spawnTime+System.currentTimeMillis()).milliseconds.toComponents { hours, minutes, seconds, _ ->
-                        "§6${hours}h${minutes}m${seconds}s"
-                    }} §8ago.")
-                } else {
-                    text.add("§8No recent Inquisitors.")
-                }
-
-                if (Utils.inSkyblock && SBInfo.mode == SkyblockIsland.Hub.mode && Skytils.config.mythoMobHealth && mc.thePlayer != null && mc.theWorld != null) {
-                    for (entity in mc.theWorld.loadedEntityList) {
-                        if (!entity.isDead && entity is EntityArmorStand && (entity.name.containsAny("Exalted","Stalwart","Minos","Bagheera","Azrael"))) {
-                            text.add(entity.name)
+            if (!toggled || !Utils.inSkyblock || SBInfo.mode != SkyblockIsland.Hub.mode || !Utils.isMytho) return
+            val text = ArrayList<String>()
+            if (Skytils.config.lastInqInfo && System.currentTimeMillis() - lastInq.spawnTime < 1000 * 60 * 60 * 3) {
+                text.add(
+                    "Last Inq: §b${lastInq.spawner} §8@ ${
+                        (-lastInq.spawnTime + System.currentTimeMillis()).milliseconds.toComponents { hours, minutes, seconds, _ ->
+                            "§6${hours}h${minutes}m${seconds}s"
                         }
+                    } §8ago."
+                )
+            } else {
+                text.add("§8No recent Inquisitors.")
+            }
+
+            if (Utils.inSkyblock && SBInfo.mode == SkyblockIsland.Hub.mode && Skytils.config.mythoMobHealth && mc.thePlayer != null && mc.theWorld != null) {
+                for (entity in mc.theWorld.loadedEntityList) {
+                    if (!entity.isDead && entity is EntityArmorStand && (entity.name.containsAny(
+                            "Exalted",
+                            "Stalwart",
+                            "Minos",
+                            "Bagheera",
+                            "Azrael"
+                        ))
+                    ) {
+                        text.add(entity.name)
                     }
-
                 }
-
-                RenderUtil.drawAllInList(this, if (text.isNotEmpty()) text else return)
 
             }
+
+            RenderUtil.drawAllInList(this, if (text.isNotEmpty()) text else return)
+
+
         }
 
         override fun demoRender() {
-            val demoText = ArrayList<String>()
-            demoText.add("§6Last Inq: §bsongreaver §8@ §60h10m15s §8ago")
-            demoText.add("§8[§7Lv210§8] §c§2Exalted Minotaur§r §e0§f/§a2.5M§c❤")
+            val demoText = listOf(
+                "§6Last Inq: §bsongreaver §8@ §60h10m15s §8ago",
+                "§8[§7Lv210§8] §c§2Exalted Minotaur§r §e0§f/§a2.5M§c❤"
+            )
             RenderUtil.drawAllInList(this, demoText)
         }
 
