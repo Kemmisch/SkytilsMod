@@ -311,6 +311,7 @@ object GriffinBurrows {
         }
         if (Skytils.config.sendInquisitorCoords && (event.message.formattedText.contains("\$INQ\$") || (event.message.formattedText.contains("§r§eYou dug out ") && event.message.unformattedText.contains("Inquis")))) {
             Skytils.sendMessageQueue.add("/pc x: ${mc.thePlayer.posX.toInt()}, y: ${mc.thePlayer.posY.toInt()}, z: ${mc.thePlayer.posZ.toInt()}")
+            GuiManager.createTitle("§6[§r§b§kr§r§6]§r §3${mc.thePlayer.name}'s§r §6Inquisitor [§r§b§kr§r§6]§r",100)
         }
     }
 
@@ -390,7 +391,6 @@ object GriffinBurrows {
     fun onWorldChange(event: WorldEvent.Unload) {
         particleBurrows.clear()
         recentlyDugParticleBurrows.clear()
-        menuOpened=false
     }
 
     @SubscribeEvent
