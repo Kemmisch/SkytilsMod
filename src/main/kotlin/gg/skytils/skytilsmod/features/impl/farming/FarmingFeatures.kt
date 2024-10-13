@@ -132,7 +132,7 @@ object FarmingFeatures {
                 if (Skytils.config.trapperQuickWarp) {
                     animalLocation = mobMatch.groups["location"]!!.value
                     if (animalLocation == "Desert Settlement") {
-                        QuickWarp.pushWarp(
+                        QuickWarp.setWarp(
                             QuickWarp.Warp(
                                 "desert",
                                 "farming_1",
@@ -144,7 +144,7 @@ object FarmingFeatures {
                         )
                         //UChat.chat("Warp pushed. - settlement")
                     } else if (animalLocation == "Oasis") {
-                        QuickWarp.pushWarp(
+                        QuickWarp.setWarp(
                             QuickWarp.Warp(
                                 "desert",
                                 "farming_1",
@@ -182,7 +182,7 @@ object FarmingFeatures {
                 }
 
                 if (Skytils.config.trapperQuickWarp) {
-                    QuickWarp.pushWarp(
+                    QuickWarp.setWarp(
                         QuickWarp.Warp(
                             "trapper",
                             "farming_1",

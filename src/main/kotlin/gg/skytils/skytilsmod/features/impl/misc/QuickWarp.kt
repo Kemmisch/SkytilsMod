@@ -18,7 +18,6 @@
 
 package gg.skytils.skytilsmod.features.impl.misc
 
-import gg.essential.universal.UChat
 import gg.skytils.skytilsmod.Skytils
 import gg.skytils.skytilsmod.core.structure.GuiElement
 import gg.skytils.skytilsmod.utils.SBInfo
@@ -43,34 +42,16 @@ object QuickWarp {
 
     var keybindQuickWarp = KeyBinding("Quick Warp", Keyboard.KEY_Z,"Skytils")
 
-    enum class ReasonPriorities (val reason: String, val priority: Long) {
-        INQUISITOR("inq",1L),
-        BURROW_GUESS("burrow",2L),
-        TRAPPER_DESERT("desert",1L),
-        TRAPPER_TREVOR("trevor",1L),
-        LOWEST("lowest",Long.MAX_VALUE);
-
-        companion object {
-            fun getFromReason(reason: String): ReasonPriorities? {
-                return ReasonPriorities.entries.find { it.reason == reason }
-            }
-
-            fun comparePriorities(reason1: String?, reason2: String?): Boolean {
-                return (ReasonPriorities.entries.find { it.reason == reason1 }?.priority
-                        ?: Long.MAX_VALUE) >= (ReasonPriorities.entries.find { it.reason == reason2 }?.priority
-                        ?: Long.MAX_VALUE)
-            }
-        }
+    enum class ReasonPriorities (val reason: String) {
+        INQUISITOR("inq"),
+        BURROW_GUESS("burrow"),
+        TRAPPER_DESERT("desert"),
+        TRAPPER_TREVOR("trevor"),
 
     }
 
 
-    fun pushWarp(newWarp: Warp) {
-        //if (ReasonPriorities.comparePriorities(
-        //        newWarp.reason,
-        //        currentWarp?.reason ?: "lowest"
-        //   ) && newWarp.validMode == (SBInfo.mode ?: return)
-        //)
+    fun setWarp(newWarp: Warp) {
             currentWarp = newWarp
 
     }
