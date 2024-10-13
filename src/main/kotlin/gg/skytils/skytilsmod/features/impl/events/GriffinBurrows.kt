@@ -92,7 +92,7 @@ object GriffinBurrows {
 
         companion object {
             fun getClosest(guess: Vec3, player: Vec3): WarpLocation? {
-                var closest: WarpLocation? = HUB
+                var closest: WarpLocation = HUB
                 WarpLocation.entries.forEach {
                     if (it.allowed && closest != it) {
                         if (closest!!.coords.getXZDistSq(guess) > it.coords.getXZDistSq(guess)) {
@@ -142,7 +142,7 @@ object GriffinBurrows {
         val containerName = event.container.lowerChestInventory.displayName.unformattedText
         //Code borrowed from SoopyV2 by @Soopyboo32
         if (containerName.startsWith("Hub Warps")) {
-            val warpItems = event.container.inventorySlots.filterNotNull().filter { it.stack.item == Items.paper }
+            val warpItems = event.container.inventorySlots.filterNotNull().filter { it.stack?.item == Items.paper }
             warpItems.forEach {
                 val warpLoc = getItemLore(it.stack).firstOrNull().stripControlCodes().replace("/warp ", "")
                 WarpLocation.getFromCmdName(warpLoc)?.allowed = true
