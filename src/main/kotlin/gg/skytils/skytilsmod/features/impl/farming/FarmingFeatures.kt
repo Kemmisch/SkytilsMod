@@ -56,11 +56,13 @@ object FarmingFeatures {
     var animalRarity: String? = null
     var animalLocation: String? = null
     var timeAlive = -1L
-    var mobCoords: Vec3? = null
-    var theodoliteUsed = false
-    val theodoliteError = 2.5
-    private val mobRegex = Regex("§8\\[§7Lv\\d\\d?§8] §c(§.)?(?<rarity>\\w{1,13}) (?<type>\\w{1,10})§r §.[\\d,]+§f/§.[\\d,]+§.❤")
-    private val trevorRegex = Regex("§e\\[NPC] Trevor§f: §rYou can find your §.§l(?<rarity>TRACKABLE|UNTRACKABLE|UNDETECTED|ENDANGERED|ELUSIVE) §fanimal near the (§.)?(?<location>(Desert Settlement|Oasis|Desert Mountain|Overgrown Mushroom Cave|Glowing Mushroom Cave|Mushroom Gorge))§f.§r")
+    private var mobCoords: Vec3? = null
+    private var theodoliteUsed = false
+    private const val theodoliteError = 2.5
+    private val mobRegex =
+        Regex("§8\\[§7Lv\\d\\d?§8] §c(§.)?(?<rarity>\\w{1,13}) (?<type>\\w{1,10})§r §.[\\d,]+§f/§.[\\d,]+§.❤")
+    private val trevorRegex =
+        Regex("§e\\[NPC] Trevor§f: §rYou can find your §.§l(?<rarity>TRACKABLE|UNTRACKABLE|UNDETECTED|ENDANGERED|ELUSIVE) §fanimal near the (§.)?(?<location>(Desert Settlement|Oasis|Desert Mountain|Overgrown Mushroom Cave|Glowing Mushroom Cave|Mushroom Gorge))§f.§r")
     var acceptTrapperCommand = ""
 
     private val targetHeightRegex =
@@ -70,12 +72,24 @@ object FarmingFeatures {
 
     var c = mutableListOf<Quad>()
 
-    data class Quad(val c1: Vec3, val c2: Vec3, val c3: Vec3, val c4: Vec3, val width: Int, var color: Color, var matrixStack: UMatrixStack, var alphaMultiplier: Float = 1F)
+    data class Quad(
+        val c1: Vec3,
+        val c2: Vec3,
+        val c3: Vec3,
+        val c4: Vec3,
+        val width: Int,
+        var color: Color,
+        var matrixStack: UMatrixStack,
+        var alphaMultiplier: Float = 1F
+    )
 
-    fun rotatex2d(theta: Float, px: Double, pz: Double, ox: Double, oz: Double): Double { return cos(theta)*(px-ox) - sin(theta)*(pz-oz) + ox }
+    private fun rotatex2d(theta: Float, px: Double, pz: Double, ox: Double, oz: Double): Double {
+        return cos(theta) * (px - ox) - sin(theta) * (pz - oz) + ox
+    }
 
-    fun rotatez2d(theta: Float, px: Double, pz: Double, ox: Double, oz: Double): Double { return sin(theta)*(px-ox) - cos(theta)*(pz-oz) + oz }
-
+    private fun rotatez2d(theta: Float, px: Double, pz: Double, ox: Double, oz: Double): Double {
+        return sin(theta) * (px - ox) - cos(theta) * (pz - oz) + oz
+    }
 
 
     @SubscribeEvent(receiveCanceled = true)
@@ -105,7 +119,8 @@ object FarmingFeatures {
 
 
                 if (Skytils.config.trapperPing) {
-                    trapperCooldownExpire = System.currentTimeMillis() + if (MayorInfo.currentMayor == "Finnegan") 30000 else 60000
+                    trapperCooldownExpire =
+                        System.currentTimeMillis() + if (MayorInfo.currentMayor == "Finnegan") 30000 else 60000
                 }
                 if (Skytils.config.talbotsTheodoliteHelper) {
                     targetMinY = -1
@@ -117,10 +132,28 @@ object FarmingFeatures {
                 if (Skytils.config.trapperQuickWarp) {
                     animalLocation = mobMatch.groups["location"]!!.value
                     if (animalLocation == "Desert Settlement") {
-                        QuickWarp.pushWarp(QuickWarp.Warp("desert","farming_1",System.currentTimeMillis(),5000,"desert","§eDesert Settlement"))
+                        QuickWarp.pushWarp(
+                            QuickWarp.Warp(
+                                "desert",
+                                "farming_1",
+                                System.currentTimeMillis(),
+                                5000,
+                                "desert",
+                                "§eDesert Settlement"
+                            )
+                        )
                         //UChat.chat("Warp pushed. - settlement")
                     } else if (animalLocation == "Oasis") {
-                        QuickWarp.pushWarp(QuickWarp.Warp("desert","farming_1",System.currentTimeMillis(),10000,"desert","§bOasis"))
+                        QuickWarp.pushWarp(
+                            QuickWarp.Warp(
+                                "desert",
+                                "farming_1",
+                                System.currentTimeMillis(),
+                                10000,
+                                "desert",
+                                "§bOasis"
+                            )
+                        )
                         //UChat.chat("Warp pushed. - oasis")
                     }
                 }
@@ -149,7 +182,16 @@ object FarmingFeatures {
                 }
 
                 if (Skytils.config.trapperQuickWarp) {
-                    QuickWarp.pushWarp(QuickWarp.Warp("trapper","farming_1",System.currentTimeMillis(),5000,"trevor","§2Trevor"))
+                    QuickWarp.pushWarp(
+                        QuickWarp.Warp(
+                            "trapper",
+                            "farming_1",
+                            System.currentTimeMillis(),
+                            5000,
+                            "trevor",
+                            "§2Trevor"
+                        )
+                    )
                     //UChat.chat("Warp pushed. - trevor")
                 }
 
@@ -190,23 +232,41 @@ object FarmingFeatures {
                         val x = mc.thePlayer.posX
                         val z = mc.thePlayer.posZ
 
-                        val minAngle = Math.toRadians(if (below) (90 - angle + theodoliteError) else (90 - angle - theodoliteError))
-                        val maxAngle = Math.toRadians(if (below) (90 - angle - theodoliteError) else (90 - angle + theodoliteError))
+                        val minAngle =
+                            Math.toRadians(if (below) (90 - angle + theodoliteError) else (90 - angle - theodoliteError))
+                        val maxAngle =
+                            Math.toRadians(if (below) (90 - angle - theodoliteError) else (90 - angle + theodoliteError))
+
+                        val x1 = (x + (tan(minAngle) * (maxY)))
+                        val x2 = (x + (tan(maxAngle) * (maxY)))
+                        val x3 = (x + (tan(maxAngle) * (minY)))
+                        val x4 = (x + (tan(minAngle) * (minY)))
 
                         for (i in 1..passes) {
-                            val R = Math.toRadians((360*i/passes).toDouble()).toFloat()
+                            val R = Math.toRadians((360 * i / passes).toDouble()).toFloat()
 
-                            val x1 = (x + (tan(minAngle) * (maxY)))
-                            val x2 = (x + (tan(maxAngle) * (maxY)))
-                            val x3 = (x + (tan(maxAngle) * (minY)))
-                            val x4 = (x + (tan(minAngle) * (minY)))
+                            val c1 = Vec3(
+                                rotatex2d(R, x1, z, x, z),
+                                if (below) minTargetY else maxTargetY,
+                                rotatez2d(R, x1, z, x, z)
+                            )
+                            val c2 = Vec3(
+                                rotatex2d(R, x2, z, x, z),
+                                if (below) minTargetY else maxTargetY,
+                                rotatez2d(R, x2, z, x, z)
+                            )
+                            val c3 = Vec3(
+                                rotatex2d(R, x3, z, x, z),
+                                if (!below) minTargetY else maxTargetY,
+                                rotatez2d(R, x3, z, x, z)
+                            )
+                            val c4 = Vec3(
+                                rotatex2d(R, x4, z, x, z),
+                                if (!below) minTargetY else maxTargetY,
+                                rotatez2d(R, x4, z, x, z)
+                            )
 
-                            val c1 = Vec3(rotatex2d(R,x1,z,x,z), if (below) minTargetY else maxTargetY, rotatez2d(R,x1,z,x,z))
-                            val c2 = Vec3(rotatex2d(R,x2,z,x,z), if (below) minTargetY else maxTargetY, rotatez2d(R,x2,z,x,z))
-                            val c3 = Vec3(rotatex2d(R,x3,z,x,z), if (!below) minTargetY else maxTargetY, rotatez2d(R,x3,z,x,z))
-                            val c4 = Vec3(rotatex2d(R,x4,z,x,z), if (!below) minTargetY else maxTargetY, rotatez2d(R,x4,z,x,z))
-
-                            c.add(Quad(c1,c2,c3,c4,3,Skytils.config.trapperSolverColor,UMatrixStack(),0.5F))
+                            c.add(Quad(c1, c2, c3, c4, 3, Skytils.config.trapperSolverColor, UMatrixStack(), 0.5F))
                         }
                         theodoliteUsed = true
                     }
@@ -301,11 +361,11 @@ object FarmingFeatures {
         if (entity.isInvisible) animalType = null
         if ((mobMatch.groups.get("rarity")?.value
                 ?: return) != animalRarity || mobMatch.groups.get("type")?.value != (animalType
-                ?: mobMatch.groups.get("type")?.value) || !entity.customNameTag.containsAny("/","\\")
+                ?: mobMatch.groups.get("type")?.value) || !entity.customNameTag.containsAny("/", "\\")
         ) return
         animalType = mobMatch.groups.get("type")?.value ?: return
         val (x, y, z) = RenderUtil.fixRenderPos(event.x, event.y, event.z)
-        mobCoords = Vec3(x,y,z)
+        mobCoords = Vec3(x, y, z)
         RenderUtil.draw3DLine(
             mobCoords ?: return,
             mc.thePlayer.getPositionEyes(RenderUtil.getPartialTicks()),
@@ -320,12 +380,21 @@ object FarmingFeatures {
     fun onWorldRender(event: RenderWorldLastEvent) {
         if (c.isEmpty()) return
         for (quad in c) {
-            RenderUtil.drawQuad(quad.c1,quad.c2,quad.c3,quad.c4,quad.width,quad.color,event.partialTicks,quad.matrixStack,quad.alphaMultiplier)
+            RenderUtil.drawQuad(
+                quad.c1,
+                quad.c2,
+                quad.c3,
+                quad.c4,
+                quad.width,
+                quad.color,
+                event.partialTicks,
+                quad.matrixStack,
+                quad.alphaMultiplier
+            )
         }
 
 
     }
-
 
 
 }
