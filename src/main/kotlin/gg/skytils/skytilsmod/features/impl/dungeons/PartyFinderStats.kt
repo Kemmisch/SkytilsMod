@@ -174,7 +174,7 @@ object PartyFinderStats {
                                     itemIds.contains("SHADOW_FURY") -> add("§8Shadow Fury")
                                     itemIds.contains("FLOWER_OF_TRUTH") -> add("§cFoT")
                                 }
-                                //Tank/Healer
+                                //Tank & Healer
                                 when {
                                     itemIds.contains("GLOOMLOCK_GRIMOIRE") -> add("§5Gloomlock")
                                     itemIds.contains("TRIBAL_SPEAR") -> add("§6Tribal Spear")

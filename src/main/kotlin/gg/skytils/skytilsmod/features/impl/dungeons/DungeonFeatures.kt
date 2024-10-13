@@ -480,7 +480,7 @@ object DungeonFeatures {
                         mc.theWorld.removeEntity(event.entity)
                     }
                 }
-
+                
             }
             if (!mc.renderManager.isDebugBoundingBox) {
                 if (!event.entity.isInvisible) {
